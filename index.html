@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WealthOS — Personal Financial Operating System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--surface:#111827;--card:#1a2236;--card2:#1e293b;--border:#2a3a52;--text:#e2e8f0;--text2:#94a3b8;--accent:#6366f1;--accent2:#818cf8;--green:#10b981;--green2:#34d399;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;--cyan:#06b6d4;--pink:#ec4899;--purple:#a855f7;--ring:rgba(99,102,241,.25)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;z-index:100}
+.logo{padding:0 20px 24px;font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.logo span{font-size:11px;display:block;-webkit-text-fill-color:var(--text2);font-weight:400;letter-spacing:1px;margin-top:2px}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);padding:16px 20px 8px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text2);font-size:13px;transition:.2s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(99,102,241,.08);color:var(--text)}
+.nav-item.active{background:rgba(99,102,241,.12);color:var(--accent2);border-left-color:var(--accent)}
+.nav-item svg{width:18px;height:18px;flex-shrink:0}
+.main{margin-left:240px;flex:1;padding:28px 32px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:24px;font-weight:700;margin-bottom:4px}
+.page-sub{color:var(--text2);font-size:13px;margin-bottom:24px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.card-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-bottom:12px;font-weight:600}
+.card-value{font-size:28px;font-weight:700}
+.card-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.card-icon{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.health-ring{width:160px;height:160px;margin:0 auto 12px;position:relative}
+.health-ring canvas{width:100%!important;height:100%!important}
+.health-ring .score-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.health-ring .score-num{font-size:40px;font-weight:800}
+.health-ring .score-label{font-size:11px;color:var(--text2)}
+.prog-wrap{margin-bottom:14px}.prog-wrap:last-child{margin-bottom:0}
+.prog-header{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.prog-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .6s}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:10px 12px;border-bottom:1px solid rgba(42,58,82,.4)}
+.tbl tr:hover td{background:rgba(99,102,241,.04)}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:rgba(16,185,129,.15);color:var(--green2)}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
+.badge-blue{background:rgba(99,102,241,.15);color:var(--accent2)}
+.badge-cyan{background:rgba(6,182,212,.15);color:var(--cyan)}
+.btn{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent2)}
+.btn-outline.active{border-color:var(--accent);color:var(--accent2);background:rgba(99,102,241,.1)}
+.btn-group{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.traffic{display:flex;align-items:center;gap:8px;padding:12px 16px;border-radius:10px;font-weight:600;font-size:15px}
+.traffic-green{background:rgba(16,185,129,.12);color:var(--green2)}
+.traffic-yellow{background:rgba(245,158,11,.12);color:var(--yellow)}
+.traffic-red{background:rgba(239,68,68,.12);color:var(--red)}
+.insight{display:flex;gap:12px;padding:14px 16px;background:var(--card2);border-radius:10px;margin-bottom:10px;border-left:3px solid var(--accent);font-size:13px;line-height:1.5}
+.insight .icon{font-size:20px;flex-shrink:0}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 20px;cursor:pointer;font-size:13px;color:var(--text2);border-bottom:2px solid transparent;transition:.2s;font-weight:500}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.form-input{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+select.form-input{cursor:pointer}
+.chart-wrap{position:relative;height:220px}.chart-wrap canvas{width:100%!important;height:100%!important}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.coach-bubble{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(6,182,212,.08));border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:16px 20px;margin-bottom:14px;font-size:13px;line-height:1.6}
+.coach-bubble .coach-tag{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);font-weight:700;margin-bottom:6px}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0;padding:16px}.g2,.g3,.g4{grid-template-columns:1fr}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page.active{animation:fadeIn .3s ease}
+.glow{box-shadow:0 0 20px rgba(99,102,241,.08)}
+/* Profile-specific */
+.profile-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px}
+.profile-section-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.row-entry{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap}
+.row-entry .form-group{margin-bottom:0;flex:1;min-width:120px}
+.row-entry .btn{align-self:flex-end;flex-shrink:0;height:40px}
+.save-banner{position:fixed;top:0;left:240px;right:0;background:linear-gradient(135deg,var(--accent),var(--cyan));color:#fff;text-align:center;padding:12px;font-weight:600;font-size:14px;z-index:200;transform:translateY(-100%);transition:transform .3s ease}
+.save-banner.show{transform:translateY(0)}
+/* Gamification */
+.xp-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px}
+.xp-level{display:flex;flex-direction:column;align-items:center;min-width:80px}
+.xp-level-num{font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.xp-level-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);margin-top:2px}
+.xp-info{flex:1}
+.xp-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.xp-subtitle{font-size:11px;color:var(--text2);margin-bottom:8px}
+.xp-track{height:12px;background:var(--border);border-radius:6px;overflow:hidden;position:relative}
+.xp-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--cyan));transition:width .8s ease}
+.xp-text{font-size:10px;color:var(--text2);margin-top:4px;text-align:right}
+.xp-stats{display:flex;gap:16px;min-width:200px;justify-content:flex-end}
+.xp-stat{text-align:center}
+.xp-stat-val{font-size:18px;font-weight:700;color:var(--accent2)}
+.xp-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text2)}
+/* Badges */
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.badge-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;transition:.3s;position:relative;overflow:hidden}
+.badge-card.unlocked{border-color:var(--accent);box-shadow:0 0 16px rgba(99,102,241,.15)}
+.badge-card.locked{opacity:.45;filter:grayscale(.8)}
+.badge-card .badge-icon{font-size:36px;margin-bottom:8px;display:block}
+.badge-card .badge-name{font-size:12px;font-weight:700;margin-bottom:4px}
+.badge-card .badge-desc{font-size:10px;color:var(--text2);line-height:1.4}
+.badge-card .badge-check{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+@keyframes badgePop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.badge-card.unlocked .badge-icon{animation:badgePop .5s ease}
+/* Streaks */
+.streak-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.streak-card{flex:1;min-width:160px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.streak-card .streak-fire{font-size:32px}
+.streak-card .streak-num{font-size:28px;font-weight:800;margin:4px 0}
+.streak-card .streak-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.streak-card.on-fire{border-color:var(--orange);box-shadow:0 0 16px rgba(249,115,22,.15)}
+/* Challenges */
+.challenge-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.2s}
+.challenge-item:hover{border-color:var(--accent)}
+.challenge-item.done{border-color:var(--green);background:rgba(16,185,129,.05)}
+.challenge-check{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;transition:.2s}
+.challenge-item.done .challenge-check{background:var(--green);border-color:var(--green);color:#fff}
+.challenge-info{flex:1}
+.challenge-name{font-size:13px;font-weight:600}
+.challenge-xp{font-size:11px;color:var(--accent2);font-weight:600}
+.challenge-desc{font-size:11px;color:var(--text2)}
+</style>
+</head>
+<body>
+
+<div class="save-banner" id="saveBanner">Profile saved — all modules updated!</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+<div class="logo">WealthOS<span>Financial Operating System</span></div>
+
+<div class="nav-section">Setup</div>
+<a class="nav-item" onclick="showPage('profile',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+My Profile</a>
+
+<div class="nav-section">Overview</div>
+<a class="nav-item active" onclick="showPage('dashboard',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+Dashboard</a>
+
+<div class="nav-section">Money Management</div>
+<a class="nav-item" onclick="showPage('budget',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+Budget Builder</a>
+<a class="nav-item" onclick="showPage('goals',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+Goal Planner</a>
+<a class="nav-item" onclick="showPage('debt',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+Debt Eliminator</a>
+
+<div class="nav-section">Growth</div>
+<a class="nav-item" onclick="showPage('credit',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+Credit Center</a>
+<a class="nav-item" onclick="showPage('home',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+Home Planner</a>
+<a class="nav-item" onclick="showPage('purchase',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+Purchase Evaluator</a>
+<a class="nav-item" onclick="showPage('wealth',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
+Wealth Builder</a>
+
+<div class="nav-section">Gamification</div>
+<a class="nav-item" onclick="showPage('achievements',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7"/><path d="M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/><path d="M4 22h16"/><path d="M10 22V8a4 4 0 018 0v14"/><path d="M6 22V8a4 4 0 018 0"/></svg>
+Achievements</a>
+
+<div class="nav-section">Intelligence</div>
+<a class="nav-item" onclick="showPage('coach',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+Financial Coach</a>
+<a class="nav-item" onclick="showPage('behavior',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg>
+Behavior Engine</a>
+<a class="nav-item" onclick="showPage('reports',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+Reports & Insights</a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ===== MY PROFILE ===== -->
+<div id="pg-profile" class="page">
+<div class="page-title">My Financial Profile</div>
+<div class="page-sub">Enter your financial data below. Hit "Save & Update" to refresh your entire WealthOS dashboard.</div>
+
+<div class="grid g2">
+<!-- LEFT COLUMN -->
+<div>
+  <!-- Income -->
+  <div class="profile-section">
+    <div class="profile-section-title">💰 Income</div>
+    <div class="form-group">
+      <label class="form-label">Monthly Take-Home Income ($)</label>
+      <input class="form-input" type="number" id="p-income" value="6800">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Prior Month Income ($)</label>
+      <input class="form-input" type="number" id="p-income-prev" value="6600">
+    </div>
+  </div>
+
+  <!-- Fixed Expenses -->
+  <div class="profile-section">
+    <div class="profile-section-title">🏠 Fixed Expenses (Monthly)</div>
+    <div class="grid g2">
+      <div class="form-group"><label class="form-label">Housing / Rent</label><input class="form-input" type="number" id="p-housing" value="1650"></div>
+      <div class="form-group"><label class="form-label">Utilities</label><input class="form-input" type="number" id="p-utilities" value="280"></div>
+      <div class="form-group"><label class="form-label">Insurance</label><input class="form-input" type="number" id="p-insurance" value="340"></div>
+      <div class="form-group"><label class="form-label">Transportation</label><input class="form-input" type="number" id="p-transport" value="390"></div>
+    </div>
+  </div>
+
+  <!-- Variable Expenses -->
+  <div class="profile-section">
+    <div class="profile-section-title">🛒 Variable Expenses (Monthly)</div>
+    <div class="grid g2">
+      <div class="form-group"><label class="form-label">Groceries</label><input class="form-input" type="number" id="p-groceries" value="520"></div>
+      <div class="form-group"><label class="form-label">Dining Out</label><input class="form-input" type="number" id="p-dining" value="420"></div>
+      <div class="form-group"><label class="form-label">Entertainment</label><input class="form-input" type="number" id="p-entertainment" value="280"></div>
+      <div class="form-group"><label class="form-label">Shopping</label><input class="form-input" type="number" id="p-shopping" value="350"></div>
+      <div class="form-group"><label class="form-label">Subscriptions</label><input class="form-input" type="number" id="p-subscriptions" value="187"></div>
+      <div class="form-group"><label class="form-label">Personal Care</label><input class="form-input" type="number" id="p-personalcare" value="150"></div>
+      <div class="form-group"><label class="form-label">Hobbies</label><input class="form-input" type="number" id="p-hobbies" value="353"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT COLUMN -->
+<div>
+  <!-- Debts -->
+  <div class="profile-section">
+    <div class="profile-section-title">💳 Debts</div>
+    <div id="debt-rows">
+      <!-- Populated by JS -->
+    </div>
+    <button class="btn btn-outline" onclick="addDebtRow()">+ Add Debt</button>
+  </div>
+
+  <!-- Savings Goals -->
+  <div class="profile-section">
+    <div class="profile-section-title">🎯 Savings Goals</div>
+    <div id="goal-rows">
+      <!-- Populated by JS -->
+    </div>
+    <button class="btn btn-outline" onclick="addGoalRow()">+ Add Goal</button>
+  </div>
+
+  <!-- Credit -->
+  <div class="profile-section">
+    <div class="profile-section-title">📊 Credit Information</div>
+    <div class="grid g2">
+      <div class="form-group"><label class="form-label">Current Credit Score</label><input class="form-input" type="number" id="p-credit-score" value="692"></div>
+      <div class="form-group"><label class="form-label">Credit Utilization (%)</label><input class="form-input" type="number" id="p-credit-util" value="38"></div>
+      <div class="form-group"><label class="form-label">Open Accounts</label><input class="form-input" type="number" id="p-credit-accounts" value="5"></div>
+      <div class="form-group"><label class="form-label">Collections</label><input class="form-input" type="number" id="p-collections" value="0"></div>
+    </div>
+  </div>
+
+  <!-- Homeownership -->
+  <div class="profile-section">
+    <div class="profile-section-title">🏡 Homeownership Goals</div>
+    <div class="grid g2">
+      <div class="form-group"><label class="form-label">Target Home Price ($)</label><input class="form-input" type="number" id="p-home-price" value="300000"></div>
+      <div class="form-group"><label class="form-label">Down Payment % Target</label><input class="form-input" type="number" id="p-home-dp-pct" value="20"></div>
+      <div class="form-group"><label class="form-label">Mortgage Rate (%)</label><input class="form-input" type="number" id="p-home-rate" value="6.5" step="0.1"></div>
+      <div class="form-group"><label class="form-label">Monthly Property Tax ($)</label><input class="form-input" type="number" id="p-home-tax" value="250"></div>
+      <div class="form-group"><label class="form-label">Monthly Insurance ($)</label><input class="form-input" type="number" id="p-home-ins" value="123"></div>
+      <div class="form-group"><label class="form-label">Monthly HOA ($)</label><input class="form-input" type="number" id="p-home-hoa" value="0"></div>
+    </div>
+  </div>
+
+  <!-- Investing -->
+  <div class="profile-section">
+    <div class="profile-section-title">📈 Investing</div>
+    <div class="form-group"><label class="form-label">Monthly Investing Amount ($)</label><input class="form-input" type="number" id="p-investing" value="150"></div>
+    <div class="form-group"><label class="form-label">Expected Annual Return (%)</label><input class="form-input" type="number" id="p-return-rate" value="8" step="0.5"></div>
+  </div>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;margin-top:8px;margin-bottom:40px">
+<button class="btn btn-primary" onclick="saveProfile()" style="padding:14px 40px;font-size:15px">Save &amp; Update All Modules</button>
+<button class="btn btn-outline" onclick="resetToSample()" style="padding:14px 24px;font-size:15px">Reset to Sample Data</button>
+</div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="pg-dashboard" class="page active">
+<div class="page-title">Financial Dashboard</div>
+<div class="page-sub">Your complete financial snapshot — updated in real time</div>
+<div id="dash-xp-bar"></div>
+<div class="grid g4" style="margin-bottom:16px" id="dash-top-cards"></div>
+<div class="grid g3" id="dash-mid-row"></div>
+<div class="grid g2" style="margin-top:16px" id="dash-bottom-row"></div>
+<div class="grid g3" style="margin-top:16px" id="dash-gamification"></div>
+</div>
+
+<!-- ===== BUDGET BUILDER ===== -->
+<div id="pg-budget" class="page">
+<div class="page-title">Budget Builder</div>
+<div class="page-sub">Build and optimize your budget using proven frameworks</div>
+<div class="btn-group">
+<button class="btn btn-outline active" onclick="switchBudget('5030',this)">50/30/20</button>
+<button class="btn btn-outline" onclick="switchBudget('6020',this)">60/20/20</button>
+<button class="btn btn-outline" onclick="switchBudget('zero',this)">Zero-Based</button>
+<button class="btn btn-outline" onclick="switchBudget('custom',this)">Custom</button>
+</div>
+<div class="grid g3" id="budget-buckets"></div>
+<div class="card" style="margin-top:16px" id="budget-recs"></div>
+</div>
+
+<!-- ===== GOAL PLANNER ===== -->
+<div id="pg-goals" class="page">
+<div class="page-title">Goal Planner</div>
+<div class="page-sub">Set targets and see how different strategies impact your timeline</div>
+<div class="grid g2" style="margin-bottom:16px" id="goals-top"></div>
+<div class="card" id="goals-chart-wrap"><div class="card-title">Goal Growth Projection</div><div class="chart-wrap" style="height:260px"><canvas id="goalChart"></canvas></div></div>
+</div>
+
+<!-- ===== DEBT ELIMINATOR ===== -->
+<div id="pg-debt" class="page">
+<div class="page-title">Debt Elimination Center</div>
+<div class="page-sub">Compare strategies and build your debt-free plan</div>
+<div class="grid g4" style="margin-bottom:16px" id="debt-summary"></div>
+<div class="card" style="margin-bottom:16px" id="debt-table-card"></div>
+<div class="grid g2" id="debt-strategies"></div>
+<div class="card" style="margin-top:16px"><div class="card-title">Debt Payoff Projection</div><div class="chart-wrap" style="height:260px"><canvas id="debtChart"></canvas></div></div>
+</div>
+
+<!-- ===== CREDIT CENTER ===== -->
+<div id="pg-credit" class="page">
+<div class="page-title">Credit Improvement Center</div>
+<div class="page-sub">Track your score and follow your personalized action plan</div>
+<div class="grid g4" style="margin-bottom:16px" id="credit-top"></div>
+<div class="grid g2" id="credit-body"></div>
+</div>
+
+<!-- ===== HOME PLANNER ===== -->
+<div id="pg-home" class="page">
+<div class="page-title">Homeownership Planner</div>
+<div class="page-sub">Model your path to homeownership with confidence</div>
+<div class="grid g4" style="margin-bottom:16px" id="home-top"></div>
+<div class="grid g2" id="home-body"></div>
+</div>
+
+<!-- ===== ACHIEVEMENTS ===== -->
+<div id="pg-achievements" class="page">
+<div class="page-title">Achievements & Challenges</div>
+<div class="page-sub">Level up your financial life — earn XP, unlock badges, and keep your streaks alive</div>
+<div id="achieve-xp-bar"></div>
+<div id="achieve-streaks"></div>
+<div class="grid g2" style="margin-bottom:16px">
+<div class="card"><div class="card-title">🏆 Achievement Badges</div><div id="achieve-badges" class="badge-grid"></div></div>
+<div class="card"><div class="card-title">⚡ Weekly Challenges</div><div id="achieve-challenges"></div><div id="achieve-challenge-xp" style="margin-top:12px;padding:10px;background:rgba(99,102,241,.08);border-radius:8px;font-size:12px;text-align:center"></div></div>
+</div>
+<div class="card" id="achieve-history"><div class="card-title">📊 XP Breakdown</div><div id="achieve-xp-breakdown"></div></div>
+</div>
+
+<!-- ===== PURCHASE EVALUATOR ===== -->
+<div id="pg-purchase" class="page">
+<div class="page-title">Major Purchase Evaluator</div>
+<div class="page-sub">Make confident spending decisions backed by data</div>
+<div class="grid g2" style="margin-bottom:16px">
+<div class="card">
+<div class="card-title">Evaluate a Purchase</div>
+<div class="form-group"><label class="form-label">Purchase Description</label><input class="form-input" id="purch-name" value="MacBook Pro 16-inch"></div>
+<div class="form-group"><label class="form-label">Amount ($)</label><input class="form-input" type="number" id="purch-amount" value="2499"></div>
+<div class="form-group"><label class="form-label">Category</label>
+<select class="form-input" id="purch-cat"><option>Electronics</option><option>Vehicle</option><option>Vacation</option><option>Furniture</option><option>Luxury</option><option>Education</option></select></div>
+<div class="form-group"><label class="form-label">Payment Method</label>
+<select class="form-input" id="purch-method"><option>Cash</option><option>Financing / Credit</option></select></div>
+<button class="btn btn-primary" onclick="evaluatePurchase()" style="width:100%">Evaluate Purchase</button>
+</div>
+<div class="card" id="purch-result"></div>
+</div>
+</div>
+
+<!-- ===== WEALTH BUILDER ===== -->
+<div id="pg-wealth" class="page">
+<div class="page-title">Wealth Builder</div>
+<div class="page-sub">Educational guidance to build long-term wealth</div>
+<div class="grid g2" style="margin-bottom:16px" id="wealth-top"></div>
+<div class="card" id="wealth-chart-card"><div class="card-title">Compound Growth Calculator</div><div class="chart-wrap" style="height:280px"><canvas id="wealthChart"></canvas></div><div id="wealth-chart-sub" style="text-align:center;font-size:12px;color:var(--text2);margin-top:8px"></div></div>
+</div>
+
+<!-- ===== FINANCIAL COACH ===== -->
+<div id="pg-coach" class="page">
+<div class="page-title">Financial Coach</div>
+<div class="page-sub">Your personal financial accountability partner</div>
+<div id="coach-content"></div>
+</div>
+
+<!-- ===== BEHAVIOR ENGINE ===== -->
+<div id="pg-behavior" class="page">
+<div class="page-title">Behavioral Finance Engine</div>
+<div class="page-sub">Understand the emotional patterns behind your spending</div>
+<div class="grid g3" style="margin-bottom:16px" id="behavior-top"></div>
+<div class="grid g2" id="behavior-body"></div>
+</div>
+
+<!-- ===== REPORTS ===== -->
+<div id="pg-reports" class="page">
+<div class="page-title">Reports & Smart Insights</div>
+<div class="page-sub">Automated weekly reviews and monthly wealth reports</div>
+<div class="tabs">
+<div class="tab active" onclick="switchReportTab(this,0)">Weekly Review</div>
+<div class="tab" onclick="switchReportTab(this,1)">Monthly Report</div>
+<div class="tab" onclick="switchReportTab(this,2)">Smart Insights</div>
+</div>
+<div class="tab-panel active" id="rpt-0"></div>
+<div class="tab-panel" id="rpt-1"></div>
+<div class="tab-panel" id="rpt-2"></div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+// ═══════════════════════════════════════════════════
+//  CENTRAL DATA STORE (with localStorage persistence)
+// ═══════════════════════════════════════════════════
+var STORAGE_KEY = 'wealthos_profile';
+var CHALLENGE_KEY = 'wealthos_challenges';
+
+function saveToStorage() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(D)); } catch(e) {}
+  try { localStorage.setItem(CHALLENGE_KEY, JSON.stringify(challengeState)); } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      var saved = JSON.parse(raw);
+      // Merge with defaults so new fields are always present
+      var def = getDefaultData();
+      for (var key in def) {
+        if (saved[key] === undefined) saved[key] = def[key];
+      }
+      return saved;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function loadChallengesFromStorage() {
+  try {
+    var raw = localStorage.getItem(CHALLENGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [false, false, false, false, false];
+}
+
+var D = loadFromStorage() || getDefaultData();
+
+function getDefaultData() {
+  return {
+    income: 6800,
+    incomePrev: 6600,
+    fixed: { housing:1650, utilities:280, insurance:340, transport:390 },
+    variable: { groceries:520, dining:420, entertainment:280, shopping:350, subscriptions:187, personalcare:150, hobbies:353 },
+    debts: [
+      { name:'Credit Card (Visa)', balance:4200, rate:22.9, minPay:120 },
+      { name:'Credit Card (MC)', balance:1800, rate:19.5, minPay:60 },
+      { name:'Car Loan', balance:8400, rate:6.5, minPay:320 },
+      { name:'Student Loan', balance:20400, rate:4.5, minPay:230 }
+    ],
+    goals: [
+      { name:'Emergency Fund', target:12000, saved:8160, monthly:400, color:'#10b981' },
+      { name:'Home Down Payment', target:60000, saved:20400, monthly:350, color:'#f59e0b' },
+      { name:'Vacation Fund', target:4000, saved:2080, monthly:200, color:'#6366f1' },
+      { name:'Investment Account', target:25000, saved:5250, monthly:150, color:'#06b6d4' },
+      { name:'New Car Fund', target:15000, saved:2250, monthly:100, color:'#f97316' }
+    ],
+    credit: { score:692, utilization:38, accounts:5, collections:0 },
+    homePlan: { price:300000, dpPct:20, rate:6.5, tax:250, insurance:123, hoa:0 },
+    investing: { monthly:150, returnRate:8 },
+    netWorthHistory: [38400,40100,41800,43500,45110,47250],
+    impulses: [
+      { date:'Jun 23', amount:89, cat:'Shopping', trigger:'Stress' },
+      { date:'Jun 21', amount:42, cat:'Food Delivery', trigger:'Boredom' },
+      { date:'Jun 18', amount:67, cat:'Shopping', trigger:'Stress' },
+      { date:'Jun 15', amount:34, cat:'Entertainment', trigger:'Celebration' },
+      { date:'Jun 12', amount:55, cat:'Shopping', trigger:'Stress' },
+      { date:'Jun 10', amount:28, cat:'Food Delivery', trigger:'Loneliness' },
+      { date:'Jun 7', amount:45, cat:'Shopping', trigger:'Boredom' },
+      { date:'Jun 3', amount:27, cat:'Snacks', trigger:'Anxiety' }
+    ]
+  };
+}
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+function money(n) { return '$' + Math.round(n).toLocaleString(); }
+function pct(n) { return Math.round(n) + '%'; }
+function badgeClass(p) { return p >= 60 ? 'badge-green' : p >= 30 ? 'badge-yellow' : 'badge-red'; }
+function goalColors() { return ['#10b981','#f59e0b','#6366f1','#06b6d4','#f97316','#ec4899','#a855f7','#ef4444']; }
+
+// Computed getters
+function totalFixed() { var t=0; for(var k in D.fixed) t+=D.fixed[k]; return t; }
+function totalVariable() { var t=0; for(var k in D.variable) t+=D.variable[k]; return t; }
+function totalDebtPayments() { var t=0; D.debts.forEach(function(d){t+=d.minPay}); return t; }
+function totalDebt() { var t=0; D.debts.forEach(function(d){t+=d.balance}); return t; }
+function totalGoalMonthly() { var t=0; D.goals.forEach(function(g){t+=g.monthly}); return t; }
+function totalExpenses() { return totalFixed() + totalVariable() + totalDebtPayments(); }
+function netCashFlow() { return D.income - totalExpenses(); }
+function savingsRate() { var ncf = netCashFlow(); return ncf > 0 ? (ncf / D.income * 100) : 0; }
+function avgDebtRate() { if(!D.debts.length) return 0; var s=0; D.debts.forEach(function(d){s+=d.rate}); return s/D.debts.length; }
+function dti() { return D.income > 0 ? (totalDebtPayments()/D.income*100) : 0; }
+function emergencyMonths() { var ef = D.goals.filter(function(g){return g.name.toLowerCase().indexOf('emergency')!==-1;}); var exp = totalExpenses(); if(!ef.length || exp===0) return 0; return ef[0].saved / (exp || 1); }
+function healthScore() {
+  var s = 0;
+  s += Math.min(savingsRate() / 25 * 25, 25);
+  s += Math.min((100 - dti()) / 100 * 20, 20);
+  s += Math.min(emergencyMonths() / 6 * 20, 20);
+  s += Math.min(D.credit.score / 850 * 20, 20);
+  var gp = 0; if(D.goals.length) { D.goals.forEach(function(g){ gp += g.target>0 ? g.saved/g.target : 0; }); gp = gp/D.goals.length*15; }
+  s += Math.min(gp,15);
+  return Math.round(Math.min(s,100));
+}
+function healthLabel(s) { return s>=80?'Excellent':s>=60?'Good':s>=40?'Fair':'Needs Work'; }
+function healthColor(s) { return s>=80?'var(--green)':s>=60?'var(--green)':s>=40?'var(--yellow)':'var(--red)'; }
+function netWorth() {
+  var assets = 0;
+  D.goals.forEach(function(g){assets+=g.saved;});
+  return assets - totalDebt();
+}
+
+// Chart management
+var charts = {};
+function makeChart(id, cfg) {
+  if(charts[id]) charts[id].destroy();
+  var el = $(id);
+  if(!el) return null;
+  charts[id] = new Chart(el, cfg);
+  return charts[id];
+}
+var gridColor = 'rgba(42,58,82,.3)';
+var tickColor = '#94a3b8';
+var tickFont = { size: 11 };
+function baseOpts(legend) {
+  return { responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:!!legend, labels:{ color:tickColor, font:tickFont } } },
+    scales:{ x:{ grid:{color:gridColor}, ticks:{color:tickColor,font:tickFont} }, y:{ grid:{color:gridColor}, ticks:{color:tickColor,font:tickFont} } }
+  };
+}
+function dollarOpts(legend) {
+  var o = baseOpts(legend);
+  o.scales.y.ticks = { color:tickColor, font:tickFont, callback: function(v){return '$'+v.toLocaleString();} };
+  return o;
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  $(('pg-'+id)).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  el.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  PROFILE PAGE — populate forms
+// ═══════════════════════════════════════════════════
+function populateProfileForm() {
+  $('p-income').value = D.income;
+  $('p-income-prev').value = D.incomePrev;
+  $('p-housing').value = D.fixed.housing;
+  $('p-utilities').value = D.fixed.utilities;
+  $('p-insurance').value = D.fixed.insurance;
+  $('p-transport').value = D.fixed.transport;
+  $('p-groceries').value = D.variable.groceries;
+  $('p-dining').value = D.variable.dining;
+  $('p-entertainment').value = D.variable.entertainment;
+  $('p-shopping').value = D.variable.shopping;
+  $('p-subscriptions').value = D.variable.subscriptions;
+  $('p-personalcare').value = D.variable.personalcare;
+  $('p-hobbies').value = D.variable.hobbies;
+  $('p-credit-score').value = D.credit.score;
+  $('p-credit-util').value = D.credit.utilization;
+  $('p-credit-accounts').value = D.credit.accounts;
+  $('p-collections').value = D.credit.collections;
+  $('p-home-price').value = D.homePlan.price;
+  $('p-home-dp-pct').value = D.homePlan.dpPct;
+  $('p-home-rate').value = D.homePlan.rate;
+  $('p-home-tax').value = D.homePlan.tax;
+  $('p-home-ins').value = D.homePlan.insurance;
+  $('p-home-hoa').value = D.homePlan.hoa;
+  $('p-investing').value = D.investing.monthly;
+  $('p-return-rate').value = D.investing.returnRate;
+  renderDebtRows();
+  renderGoalRows();
+}
+
+function renderDebtRows() {
+  var html = '';
+  D.debts.forEach(function(d, i) {
+    html += '<div class="row-entry" id="debt-row-'+i+'">'
+      +'<div class="form-group"><label class="form-label">Name</label><input class="form-input" data-debt="'+i+'" data-field="name" value="'+d.name+'"></div>'
+      +'<div class="form-group"><label class="form-label">Balance ($)</label><input class="form-input" type="number" data-debt="'+i+'" data-field="balance" value="'+d.balance+'"></div>'
+      +'<div class="form-group"><label class="form-label">Rate (%)</label><input class="form-input" type="number" step="0.1" data-debt="'+i+'" data-field="rate" value="'+d.rate+'"></div>'
+      +'<div class="form-group"><label class="form-label">Min Payment</label><input class="form-input" type="number" data-debt="'+i+'" data-field="minPay" value="'+d.minPay+'"></div>'
+      +'<button class="btn btn-danger" onclick="removeDebt('+i+')">X</button>'
+      +'</div>';
+  });
+  $('debt-rows').innerHTML = html;
+}
+function addDebtRow() {
+  D.debts.push({ name:'New Debt', balance:0, rate:0, minPay:0 });
+  renderDebtRows();
+}
+function removeDebt(i) {
+  D.debts.splice(i,1);
+  renderDebtRows();
+}
+
+function renderGoalRows() {
+  var colors = goalColors();
+  var html = '';
+  D.goals.forEach(function(g, i) {
+    html += '<div class="row-entry" id="goal-row-'+i+'">'
+      +'<div class="form-group"><label class="form-label">Goal Name</label><input class="form-input" data-goal="'+i+'" data-field="name" value="'+g.name+'"></div>'
+      +'<div class="form-group"><label class="form-label">Target ($)</label><input class="form-input" type="number" data-goal="'+i+'" data-field="target" value="'+g.target+'"></div>'
+      +'<div class="form-group"><label class="form-label">Saved ($)</label><input class="form-input" type="number" data-goal="'+i+'" data-field="saved" value="'+g.saved+'"></div>'
+      +'<div class="form-group"><label class="form-label">Monthly ($)</label><input class="form-input" type="number" data-goal="'+i+'" data-field="monthly" value="'+g.monthly+'"></div>'
+      +'<button class="btn btn-danger" onclick="removeGoal('+i+')">X</button>'
+      +'</div>';
+  });
+  $('goal-rows').innerHTML = html;
+}
+function addGoalRow() {
+  D.goals.push({ name:'New Goal', target:5000, saved:0, monthly:100, color:goalColors()[D.goals.length%8] });
+  renderGoalRows();
+}
+function removeGoal(i) {
+  D.goals.splice(i,1);
+  renderGoalRows();
+}
+
+function readProfile() {
+  D.income = parseFloat($('p-income').value)||0;
+  D.incomePrev = parseFloat($('p-income-prev').value)||0;
+  D.fixed.housing = parseFloat($('p-housing').value)||0;
+  D.fixed.utilities = parseFloat($('p-utilities').value)||0;
+  D.fixed.insurance = parseFloat($('p-insurance').value)||0;
+  D.fixed.transport = parseFloat($('p-transport').value)||0;
+  D.variable.groceries = parseFloat($('p-groceries').value)||0;
+  D.variable.dining = parseFloat($('p-dining').value)||0;
+  D.variable.entertainment = parseFloat($('p-entertainment').value)||0;
+  D.variable.shopping = parseFloat($('p-shopping').value)||0;
+  D.variable.subscriptions = parseFloat($('p-subscriptions').value)||0;
+  D.variable.personalcare = parseFloat($('p-personalcare').value)||0;
+  D.variable.hobbies = parseFloat($('p-hobbies').value)||0;
+  // Read debt rows from DOM
+  document.querySelectorAll('[data-debt]').forEach(function(el) {
+    var i = parseInt(el.getAttribute('data-debt'));
+    var f = el.getAttribute('data-field');
+    if(f==='name') D.debts[i].name = el.value;
+    else D.debts[i][f] = parseFloat(el.value)||0;
+  });
+  // Read goal rows
+  var colors = goalColors();
+  document.querySelectorAll('[data-goal]').forEach(function(el) {
+    var i = parseInt(el.getAttribute('data-goal'));
+    var f = el.getAttribute('data-field');
+    if(f==='name') D.goals[i].name = el.value;
+    else D.goals[i][f] = parseFloat(el.value)||0;
+    D.goals[i].color = colors[i % colors.length];
+  });
+  D.credit.score = parseFloat($('p-credit-score').value)||0;
+  D.credit.utilization = parseFloat($('p-credit-util').value)||0;
+  D.credit.accounts = parseInt($('p-credit-accounts').value)||0;
+  D.credit.collections = parseInt($('p-collections').value)||0;
+  D.homePlan.price = parseFloat($('p-home-price').value)||0;
+  D.homePlan.dpPct = parseFloat($('p-home-dp-pct').value)||0;
+  D.homePlan.rate = parseFloat($('p-home-rate').value)||0;
+  D.homePlan.tax = parseFloat($('p-home-tax').value)||0;
+  D.homePlan.insurance = parseFloat($('p-home-ins').value)||0;
+  D.homePlan.hoa = parseFloat($('p-home-hoa').value)||0;
+  D.investing.monthly = parseFloat($('p-investing').value)||0;
+  D.investing.returnRate = parseFloat($('p-return-rate').value)||0;
+}
+
+function saveProfile() {
+  readProfile();
+  refreshAll();
+  saveToStorage();
+  var banner = $('saveBanner');
+  banner.classList.add('show');
+  setTimeout(function(){ banner.classList.remove('show'); }, 2500);
+}
+
+function resetToSample() {
+  D = getDefaultData();
+  challengeState = [false, false, false, false, false];
+  populateProfileForm();
+  refreshAll();
+  saveToStorage();
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDashboard() {
+  var inc = D.income;
+  var exp = totalExpenses();
+  var ncf = netCashFlow();
+  var sr = savingsRate();
+  var nw = netWorth();
+  var incDiff = D.income - D.incomePrev;
+  var hs = healthScore();
+
+  $('dash-top-cards').innerHTML =
+    '<div class="card glow"><div class="card-title">Monthly Income</div><div class="card-value" style="color:var(--green)">'+money(inc)+'</div><div class="card-sub">'+(incDiff>=0?'+':'')+money(incDiff)+' vs last month</div><div class="card-icon" style="background:rgba(16,185,129,.12);color:var(--green)">💰</div></div>'
+    +'<div class="card"><div class="card-title">Monthly Expenses</div><div class="card-value" style="color:var(--red)">'+money(exp)+'</div><div class="card-sub">Fixed + variable + debt payments</div><div class="card-icon" style="background:rgba(239,68,68,.12);color:var(--red)">📊</div></div>'
+    +'<div class="card"><div class="card-title">Net Cash Flow</div><div class="card-value" style="color:'+(ncf>=0?'var(--cyan)':'var(--red)')+'">'+( ncf>=0?'+':'')+money(ncf)+'</div><div class="card-sub">'+sr.toFixed(1)+'% savings rate</div><div class="card-icon" style="background:rgba(6,182,212,.12);color:var(--cyan)">📈</div></div>'
+    +'<div class="card"><div class="card-title">Net Worth</div><div class="card-value">'+money(nw)+'</div><div class="card-sub">Assets minus debts</div><div class="card-icon" style="background:rgba(99,102,241,.12);color:var(--accent2)">⭐</div></div>';
+
+  // Health + Goals + Snapshot chart
+  var goalBars = '';
+  D.goals.forEach(function(g) {
+    var p = g.target>0 ? Math.round(g.saved/g.target*100) : 0;
+    goalBars += '<div class="prog-wrap"><div class="prog-header"><span>'+g.name+'</span><span style="color:'+g.color+'">'+pct(p)+'</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+Math.min(p,100)+'%;background:'+g.color+'"></div></div></div>';
+  });
+
+  $('dash-mid-row').innerHTML =
+    '<div class="card" style="text-align:center"><div class="card-title">Financial Health Score</div>'
+    +'<div class="health-ring"><canvas id="healthChart"></canvas><div class="score-center"><div class="score-num" style="color:'+healthColor(hs)+'">'+hs+'</div><div class="score-label">'+healthLabel(hs)+'</div></div></div>'
+    +'<div style="display:flex;justify-content:center;gap:16px;font-size:11px;color:var(--text2)"><span>Savings '+Math.round(sr)+'</span><span>DTI '+dti().toFixed(0)+'%</span><span>Credit '+D.credit.score+'</span></div></div>'
+    +'<div class="card"><div class="card-title">Goal Progress</div>'+goalBars+'</div>'
+    +'<div class="card"><div class="card-title">Monthly Snapshot</div><div class="chart-wrap"><canvas id="snapshotChart"></canvas></div></div>';
+
+  // Spending donut + insights
+  var savingsForMonth = Math.max(ncf, 0);
+  var debtPay = totalDebtPayments();
+  var subAmt = D.variable.subscriptions;
+  var invAmt = D.investing.monthly;
+  var emFund = D.goals.filter(function(g){return g.name.toLowerCase().indexOf('emergency')!==-1;});
+  var emMonths = emergencyMonths();
+  var emGap = emFund.length ? (emFund[0].target - emFund[0].saved) : 0;
+
+  var insights = '';
+  if(subAmt > invAmt) insights += '<div class="insight"><span class="icon">💡</span><span>You spend <b>'+money(subAmt)+'/mo</b> on subscriptions — more than your <b>'+money(invAmt)+'/mo</b> investing. Redirecting '+ money(Math.round((subAmt-invAmt)/2)) +' would grow your portfolio significantly.</span></div>';
+  if(emFund.length && emGap > 0) insights += '<div class="insight"><span class="icon">🎯</span><span>Your emergency fund covers <b>'+emMonths.toFixed(1)+' months</b> of expenses. Just <b>'+money(emGap)+'</b> more to hit your target.</span></div>';
+  if(D.variable.dining > 300) insights += '<div class="insight"><span class="icon">🍽️</span><span>Dining out at <b>'+money(D.variable.dining)+'/mo</b> is above average. Reducing by <b>'+money(Math.round(D.variable.dining*0.3))+'</b> could accelerate your top goal.</span></div>';
+  if(sr > 20) insights += '<div class="insight"><span class="icon">🏆</span><span>Your <b>'+sr.toFixed(1)+'%</b> savings rate is strong. Keep this momentum going!</span></div>';
+  else if(sr > 0) insights += '<div class="insight"><span class="icon">📉</span><span>Your savings rate is <b>'+sr.toFixed(1)+'%</b>. Aim for 20%+ by trimming variable spending.</span></div>';
+
+  var spendLabels = ['Housing','Groceries','Transport','Dining','Entertainment','Shopping','Subscriptions','Insurance','Utilities','Personal Care','Hobbies'];
+  var spendData = [D.fixed.housing, D.variable.groceries, D.fixed.transport, D.variable.dining, D.variable.entertainment, D.variable.shopping, D.variable.subscriptions, D.fixed.insurance, D.fixed.utilities, D.variable.personalcare, D.variable.hobbies];
+  var spendColors = ['#6366f1','#10b981','#f59e0b','#ec4899','#a855f7','#06b6d4','#f97316','#818cf8','#475569','#34d399','#ef4444'];
+
+  $('dash-bottom-row').innerHTML =
+    '<div class="card"><div class="card-title">Spending Breakdown</div><div class="chart-wrap"><canvas id="spendingDonut"></canvas></div></div>'
+    +'<div class="card"><div class="card-title">Smart Insights</div>'+insights+'</div>';
+
+  // Draw charts
+  makeChart('healthChart', { type:'doughnut', data:{datasets:[{data:[hs,100-hs],backgroundColor:[hs>=60?'#10b981':'#f59e0b','#1e293b'],borderWidth:0,cutout:'80%'}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}} });
+  makeChart('snapshotChart', { type:'bar', data:{labels:['Income','Expenses','Savings','Debt Paid'], datasets:[{label:'Current',data:[inc,exp,savingsForMonth,debtPay],backgroundColor:'#6366f1'},{label:'Prior',data:[D.incomePrev,exp*1.02,savingsForMonth*0.85,debtPay],backgroundColor:'#2a3a52'}]}, options:baseOpts(true) });
+  makeChart('spendingDonut', { type:'doughnut', data:{labels:spendLabels,datasets:[{data:spendData,backgroundColor:spendColors,borderWidth:1,borderColor:'#1a2236'}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:tickColor,font:{size:10},padding:6,boxWidth:10}}}} });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: BUDGET BUILDER
+// ═══════════════════════════════════════════════════
+var currentBudgetMethod = '5030';
+function switchBudget(type, el) {
+  document.querySelectorAll('.btn-group .btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+  currentBudgetMethod = type;
+  renderBudget();
+}
+
+function renderBudget() {
+  var inc = D.income;
+  var fxTotal = totalFixed();
+  var varTotal = totalVariable();
+  var debtPay = totalDebtPayments();
+  var goalPay = totalGoalMonthly();
+  var needs = fxTotal + D.variable.groceries; // groceries are a need
+  var wants = varTotal - D.variable.groceries;
+  var savDebt = debtPay + goalPay + D.investing.monthly;
+  var type = currentBudgetMethod;
+
+  var b1, b2, b3;
+  if(type==='5030') {
+    b1 = {label:'Needs — 50%', target:inc*0.5, actual:needs, items:[{n:'Housing',v:D.fixed.housing},{n:'Utilities',v:D.fixed.utilities},{n:'Groceries',v:D.variable.groceries},{n:'Insurance',v:D.fixed.insurance},{n:'Transportation',v:D.fixed.transport}], color:'var(--green)'};
+    b2 = {label:'Wants — 30%', target:inc*0.3, actual:wants, items:[{n:'Dining Out',v:D.variable.dining},{n:'Entertainment',v:D.variable.entertainment},{n:'Shopping',v:D.variable.shopping},{n:'Subscriptions',v:D.variable.subscriptions},{n:'Personal Care',v:D.variable.personalcare},{n:'Hobbies',v:D.variable.hobbies}], color:'var(--accent)'};
+    b3 = {label:'Savings & Debt — 20%', target:inc*0.2, actual:savDebt, items:[], color:'var(--cyan)'};
+  } else if(type==='6020') {
+    b1 = {label:'Committed — 60%', target:inc*0.6, actual:needs+debtPay, items:[{n:'Housing',v:D.fixed.housing},{n:'Utilities',v:D.fixed.utilities},{n:'Groceries',v:D.variable.groceries},{n:'Insurance',v:D.fixed.insurance},{n:'Transport',v:D.fixed.transport},{n:'Debt Payments',v:debtPay}], color:'var(--green)'};
+    b2 = {label:'Wants — 20%', target:inc*0.2, actual:wants, items:[{n:'Dining',v:D.variable.dining},{n:'Entertainment',v:D.variable.entertainment},{n:'Shopping',v:D.variable.shopping},{n:'Subscriptions',v:D.variable.subscriptions},{n:'Personal Care',v:D.variable.personalcare},{n:'Hobbies',v:D.variable.hobbies}], color:'var(--accent)'};
+    b3 = {label:'Savings — 20%', target:inc*0.2, actual:goalPay+D.investing.monthly, items:[], color:'var(--cyan)'};
+  } else if(type==='zero') {
+    b1 = {label:'Fixed Expenses', target:fxTotal, actual:fxTotal, items:[{n:'Housing',v:D.fixed.housing},{n:'Utilities',v:D.fixed.utilities},{n:'Insurance',v:D.fixed.insurance},{n:'Transport',v:D.fixed.transport}], color:'var(--green)'};
+    b2 = {label:'Variable Expenses', target:varTotal, actual:varTotal, items:[{n:'Groceries',v:D.variable.groceries},{n:'Dining',v:D.variable.dining},{n:'Entertainment',v:D.variable.entertainment},{n:'Shopping',v:D.variable.shopping},{n:'Subscriptions',v:D.variable.subscriptions}], color:'var(--accent)'};
+    b3 = {label:'Surplus Allocated', target:netCashFlow(), actual:savDebt, items:[], color:'var(--cyan)'};
+  } else {
+    b1 = {label:'Essentials — 45%', target:inc*0.45, actual:needs, items:[{n:'Housing',v:D.fixed.housing},{n:'Utilities',v:D.fixed.utilities},{n:'Groceries',v:D.variable.groceries},{n:'Insurance',v:D.fixed.insurance},{n:'Transport',v:D.fixed.transport}], color:'var(--green)'};
+    b2 = {label:'Lifestyle — 25%', target:inc*0.25, actual:wants, items:[{n:'Dining',v:D.variable.dining},{n:'Entertainment',v:D.variable.entertainment},{n:'Shopping',v:D.variable.shopping},{n:'Subscriptions',v:D.variable.subscriptions},{n:'Hobbies',v:D.variable.hobbies}], color:'var(--accent)'};
+    b3 = {label:'Future — 30%', target:inc*0.3, actual:savDebt, items:[], color:'var(--cyan)'};
+  }
+  // Add savings/debt items to bucket 3
+  D.debts.forEach(function(d){ b3.items.push({n:d.name+' Payment',v:d.minPay}); });
+  D.goals.forEach(function(g){ b3.items.push({n:g.name,v:g.monthly}); });
+  if(D.investing.monthly>0) b3.items.push({n:'Investing',v:D.investing.monthly});
+
+  function bucketCard(b, borderColor) {
+    var pctUsed = b.target>0 ? Math.round(b.actual/b.target*100) : 0;
+    var items = '';
+    b.items.forEach(function(it){ items += '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>'+it.n+'</span><span>'+money(it.v)+'</span></div>'; });
+    return '<div class="card" style="border-top:3px solid '+borderColor+'">'
+      +'<div class="card-title">'+b.label+'</div>'
+      +'<div class="card-value" style="color:'+borderColor+'">'+money(b.target)+'</div>'
+      +'<div class="card-sub">Target: '+money(b.target)+' · Actual: '+money(b.actual)+'</div>'
+      +'<div class="prog-bar" style="margin-top:10px"><div class="prog-fill" style="width:'+Math.min(pctUsed,100)+'%;background:'+borderColor+'"></div></div>'
+      +'<div style="margin-top:12px;font-size:12px;color:var(--text2)">'+items+'</div></div>';
+  }
+  $('budget-buckets').innerHTML = bucketCard(b1,'var(--green)') + bucketCard(b2,'var(--accent)') + bucketCard(b3,'var(--cyan)');
+
+  // Recommendations
+  var recs = '<div class="card-title">💡 Budget Optimization Recommendations</div>';
+  if(D.variable.dining > 200) recs += '<div class="insight"><span class="icon">🍽️</span><span>Reducing dining out by <b>'+money(Math.round(D.variable.dining*0.35))+'</b>/month frees up cash for your top savings goal.</span></div>';
+  if(D.variable.subscriptions > 100) recs += '<div class="insight"><span class="icon">📺</span><span>Subscriptions at <b>'+money(D.variable.subscriptions)+'/mo</b> — auditing could free up <b>'+money(Math.round(D.variable.subscriptions*0.3))+'/month</b>.</span></div>';
+  var surplus = netCashFlow() - savDebt;
+  if(surplus > 50) recs += '<div class="insight"><span class="icon">🎯</span><span>You have <b>'+money(surplus)+'</b> unallocated surplus. Consider directing it to your highest-priority goal.</span></div>';
+  $('budget-recs').innerHTML = recs;
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: GOAL PLANNER
+// ═══════════════════════════════════════════════════
+function renderGoals() {
+  var rows = '';
+  D.goals.forEach(function(g) {
+    var p = g.target>0 ? Math.round(g.saved/g.target*100) : 0;
+    var remain = Math.max(g.target - g.saved, 0);
+    var etaMonths = g.monthly > 0 ? Math.ceil(remain / g.monthly) : 999;
+    var eta = new Date(); eta.setMonth(eta.getMonth() + etaMonths);
+    var etaStr = eta.toLocaleString('default',{month:'short',year:'numeric'});
+    rows += '<tr><td>'+g.name+'</td><td>'+money(g.target)+'</td><td>'+money(g.saved)+'</td><td><span class="badge '+badgeClass(p)+'">'+pct(p)+'</span></td><td>'+etaStr+'</td></tr>';
+  });
+
+  // Timeline strategies for first goal
+  var fg = D.goals[0];
+  var stratHtml = '';
+  if(fg) {
+    var remain = Math.max(fg.target - fg.saved, 0);
+    var plans = [
+      {label:'Aggressive', cls:'badge-red', mult:1.6},
+      {label:'Balanced', cls:'badge-yellow', mult:1.0},
+      {label:'Conservative', cls:'badge-green', mult:0.6}
+    ];
+    var srows = '';
+    plans.forEach(function(pl) {
+      var mo = Math.round(fg.monthly * pl.mult);
+      var months = mo > 0 ? Math.ceil(remain / mo) : 999;
+      var d = new Date(); d.setMonth(d.getMonth()+months);
+      srows += '<tr><td><span class="badge '+pl.cls+'">'+pl.label+'</span></td><td>'+money(mo)+'</td><td>'+d.toLocaleString('default',{month:'short',year:'numeric'})+'</td><td>'+months+'</td></tr>';
+    });
+    stratHtml = '<div style="font-size:14px;font-weight:600;margin-bottom:10px">'+fg.name+' — '+money(fg.target)+'</div>'
+      +'<table class="tbl"><tr><th>Plan</th><th>Monthly</th><th>Completion</th><th>Months</th></tr>'+srows+'</table>';
+  }
+
+  $('goals-top').innerHTML =
+    '<div class="card"><div class="card-title">🎯 Active Goals</div><table class="tbl"><tr><th>Goal</th><th>Target</th><th>Saved</th><th>Progress</th><th>ETA</th></tr>'+rows+'</table></div>'
+    +'<div class="card"><div class="card-title">Goal Timeline Strategies</div>'+stratHtml+'</div>';
+
+  // Chart
+  var labels = ['Now'];
+  for(var m=3;m<=24;m+=3) labels.push(m+'mo');
+  var datasets = [];
+  D.goals.forEach(function(g,i) {
+    var data = [g.saved];
+    for(var m=3;m<=24;m+=3) data.push(Math.min(g.saved + g.monthly*m, g.target));
+    datasets.push({ label:g.name, data:data, borderColor:g.color||goalColors()[i%8], backgroundColor:(g.color||goalColors()[i%8])+'1a', fill:true, tension:.3 });
+  });
+  makeChart('goalChart', { type:'line', data:{labels:labels,datasets:datasets}, options:baseOpts(true) });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: DEBT ELIMINATOR
+// ═══════════════════════════════════════════════════
+function renderDebt() {
+  if(!D.debts.length) {
+    $('debt-summary').innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;padding:40px"><div class="card-value" style="color:var(--green)">Debt Free! 🎉</div><div class="card-sub">No debts entered. Congratulations!</div></div>';
+    $('debt-table-card').innerHTML = '';
+    $('debt-strategies').innerHTML = '';
+    return;
+  }
+  var td = totalDebt(), tp = totalDebtPayments(), ar = avgDebtRate(), dt = dti();
+  $('debt-summary').innerHTML =
+    '<div class="card"><div class="card-title">Total Debt</div><div class="card-value" style="color:var(--red)">'+money(td)+'</div></div>'
+    +'<div class="card"><div class="card-title">Monthly Payments</div><div class="card-value">'+money(tp)+'</div></div>'
+    +'<div class="card"><div class="card-title">Avg Interest Rate</div><div class="card-value" style="color:var(--yellow)">'+ar.toFixed(1)+'%</div></div>'
+    +'<div class="card"><div class="card-title">Debt-to-Income</div><div class="card-value" style="color:'+(dt>15?'var(--red)':'var(--orange)')+'">'+dt.toFixed(1)+'%</div></div>';
+
+  // Sort for strategies
+  var snowball = D.debts.slice().sort(function(a,b){return a.balance-b.balance;});
+  var avalanche = D.debts.slice().sort(function(a,b){return b.rate-a.rate;});
+
+  var trows = '';
+  D.debts.forEach(function(d) {
+    var si = snowball.indexOf(d)+1;
+    var ai = avalanche.indexOf(d)+1;
+    trows += '<tr><td>'+d.name+'</td><td>'+money(d.balance)+'</td><td style="color:'+(d.rate>15?'var(--red)':d.rate>8?'var(--yellow)':'var(--text)')+'">'+d.rate+'%</td><td>'+money(d.minPay)+'</td><td>#'+si+'</td><td>#'+ai+'</td></tr>';
+  });
+  $('debt-table-card').innerHTML = '<div class="card-title">Your Debts</div><table class="tbl"><tr><th>Debt</th><th>Balance</th><th>Rate</th><th>Min Payment</th><th>Snowball</th><th>Avalanche</th></tr>'+trows+'</table>';
+
+  // Simulate payoff (simplified)
+  function simPayoff(sorted) {
+    var balances = sorted.map(function(d){return d.balance;});
+    var rates = sorted.map(function(d){return d.rate/100/12;});
+    var mins = sorted.map(function(d){return d.minPay;});
+    var totalInt = 0, months = 0, extra = 0;
+    while(true) {
+      months++;
+      if(months > 600) break;
+      var allPaid = true;
+      for(var i=0;i<balances.length;i++) {
+        if(balances[i] <= 0) continue;
+        allPaid = false;
+        var interest = balances[i] * rates[i];
+        totalInt += interest;
+        var pay = mins[i] + (i===0 ? extra : 0);
+        balances[i] = balances[i] + interest - pay;
+        if(balances[i] <= 0) { extra += mins[i]; balances[i] = 0; }
+      }
+      if(allPaid) break;
+    }
+    return { months:months, interest:Math.round(totalInt) };
+  }
+  var snowRes = simPayoff(snowball);
+  var avalRes = simPayoff(avalanche);
+  var snowDate = new Date(); snowDate.setMonth(snowDate.getMonth()+snowRes.months);
+  var avalDate = new Date(); avalDate.setMonth(avalDate.getMonth()+avalRes.months);
+  var saved = snowRes.interest - avalRes.interest;
+
+  $('debt-strategies').innerHTML =
+    '<div class="card" style="border-top:3px solid var(--cyan)"><div class="card-title">⛄ Snowball Strategy</div><div class="card-sub" style="margin-bottom:12px">Smallest balances first for quick wins</div><div style="font-size:13px">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Debt-Free Date</span><b style="color:var(--cyan)">'+snowDate.toLocaleString('default',{month:'long',year:'numeric'})+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Total Interest Paid</span><b>'+money(snowRes.interest)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Monthly Payment</span><b>'+money(tp)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>First Payoff</span><b style="color:var(--green)">'+snowball[0].name+'</b></div></div></div>'
+    +'<div class="card" style="border-top:3px solid var(--green)"><div class="card-title">🏔️ Avalanche Strategy</div><div class="card-sub" style="margin-bottom:12px">Highest interest first to save the most</div><div style="font-size:13px">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Debt-Free Date</span><b style="color:var(--green)">'+avalDate.toLocaleString('default',{month:'long',year:'numeric'})+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Total Interest Paid</span><b style="color:var(--green)">'+money(avalRes.interest)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Monthly Payment</span><b>'+money(tp)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Interest Saved vs Snowball</span><b style="color:var(--green)">'+money(Math.max(saved,0))+'</b></div></div></div>';
+
+  // Debt chart
+  var dlabels = ['Now'];
+  var maxM = Math.max(snowRes.months, avalRes.months);
+  var step = Math.max(Math.round(maxM/7),3);
+  for(var m=step;m<=maxM+step;m+=step) dlabels.push(m+'mo');
+  var snowData = [td]; var avalData = [td];
+  for(var m=step;m<=maxM+step;m+=step) {
+    snowData.push(Math.max(Math.round(td*(1-m/snowRes.months)),0));
+    avalData.push(Math.max(Math.round(td*(1-m/avalRes.months)),0));
+  }
+  makeChart('debtChart', { type:'line', data:{labels:dlabels, datasets:[
+    {label:'Snowball',data:snowData,borderColor:'#06b6d4',borderDash:[5,5],tension:.3},
+    {label:'Avalanche',data:avalData,borderColor:'#10b981',tension:.3}
+  ]}, options:dollarOpts(true) });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: CREDIT CENTER
+// ═══════════════════════════════════════════════════
+function renderCredit() {
+  var sc = D.credit.score;
+  var util = D.credit.utilization;
+  var scoreBadge = sc>=740?'badge-green':sc>=670?'badge-yellow':'badge-red';
+  var scoreLabel = sc>=740?'Good':sc>=670?'Fair':'Poor';
+  // Project score improvement
+  var projected = Math.min(sc + (util>30?20:5) + (D.credit.collections>0?15:5) + 10, 850);
+
+  $('credit-top').innerHTML =
+    '<div class="card glow" style="text-align:center"><div class="card-title">Credit Score</div><div class="card-value" style="font-size:48px;color:'+(sc>=740?'var(--green)':sc>=670?'var(--yellow)':'var(--red)')+'">'+sc+'</div><div class="card-sub"><span class="badge '+scoreBadge+'">'+scoreLabel+'</span></div></div>'
+    +'<div class="card"><div class="card-title">Credit Utilization</div><div class="card-value" style="color:'+(util>30?'var(--orange)':'var(--green)')+'">'+util+'%</div><div class="card-sub">Target: under 30%</div></div>'
+    +'<div class="card"><div class="card-title">Open Accounts</div><div class="card-value">'+D.credit.accounts+'</div><div class="card-sub">'+D.credit.collections+' collections</div></div>'
+    +'<div class="card"><div class="card-title">Projected Score (6mo)</div><div class="card-value" style="color:var(--green)">'+projected+'</div><div class="card-sub">+'+(projected-sc)+' points possible</div></div>';
+
+  // Action plan
+  var actions = '';
+  if(util > 30) actions += '<div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start"><span style="color:var(--red);font-weight:700">1.</span><div><b>Reduce utilization to under 30%</b><br><span style="color:var(--text2)">Pay down revolving debt to drop from '+util+'% to 29%. Impact: +15-25 points.</span></div></div>';
+  actions += '<div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start"><span style="color:var(--orange);font-weight:700">'+(util>30?'2':'1')+'.</span><div><b>Set up autopay on all accounts</b><br><span style="color:var(--text2)">Payment history is 35% of your score. Never miss a payment.</span></div></div>';
+  if(D.credit.collections > 0) actions += '<div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start"><span style="color:var(--yellow);font-weight:700">3.</span><div><b>Address '+D.credit.collections+' collection(s)</b><br><span style="color:var(--text2)">Negotiate pay-for-delete or settlement. Impact: +20-40 points.</span></div></div>';
+  if(sc < 720) actions += '<div style="display:flex;gap:10px;align-items:flex-start"><span style="color:var(--green);font-weight:700">4.</span><div><b>Consider a credit-builder secured card</b><br><span style="color:var(--text2)">A $500 secured card used at 5% monthly boosts your credit mix.</span></div></div>';
+
+  // Credit projection chart
+  var projData = [sc];
+  for(var m=1;m<=6;m++) projData.push(Math.round(sc + (projected-sc)*(m/6)));
+
+  $('credit-body').innerHTML =
+    '<div class="card"><div class="card-title">📋 Credit Action Plan</div><div style="font-size:13px;line-height:1.8">'+actions+'</div></div>'
+    +'<div class="card"><div class="card-title">Credit Score Projection</div><div class="chart-wrap" style="height:250px"><canvas id="creditChart"></canvas></div></div>';
+
+  var co = baseOpts(false);
+  co.scales.y.min = Math.max(sc-20, 300);
+  co.scales.y.max = Math.min(projected+20, 850);
+  makeChart('creditChart', { type:'line', data:{labels:['Now','1mo','2mo','3mo','4mo','5mo','6mo'], datasets:[{label:'Projected',data:projData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4}]}, options:co });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: HOME PLANNER
+// ═══════════════════════════════════════════════════
+function renderHome() {
+  var hp = D.homePlan;
+  var dpAmt = hp.price * hp.dpPct / 100;
+  var loanAmt = hp.price - dpAmt;
+  var mr = hp.rate / 100 / 12;
+  var n = 360; // 30yr
+  var pi = mr > 0 ? loanAmt * (mr * Math.pow(1+mr,n)) / (Math.pow(1+mr,n)-1) : loanAmt/n;
+  var totalPITI = pi + hp.tax + hp.insurance + hp.hoa;
+
+  // Find home down payment goal
+  var dpGoal = D.goals.filter(function(g){return g.name.toLowerCase().indexOf('home')!==-1 || g.name.toLowerCase().indexOf('down')!==-1;});
+  var dpSaved = dpGoal.length ? dpGoal[0].saved : 0;
+  var dpPct = dpAmt > 0 ? Math.round(dpSaved/dpAmt*100) : 0;
+
+  // Ready to buy score
+  var rScore = 0;
+  rScore += D.income >= totalPITI * 3 ? 25 : Math.round(D.income / (totalPITI*3) * 25);
+  rScore += Math.min(Math.round(dpPct * 0.3), 30);
+  rScore += D.credit.score >= 740 ? 20 : D.credit.score >= 680 ? 15 : D.credit.score >= 620 ? 10 : 5;
+  rScore += dti() < 8 ? 15 : dti() < 15 ? 10 : 5;
+  rScore += emergencyMonths() >= 3 ? 10 : Math.round(emergencyMonths()/3*10);
+  rScore = Math.min(rScore, 100);
+
+  $('home-top').innerHTML =
+    '<div class="card glow" style="text-align:center;border-top:3px solid var(--accent)"><div class="card-title">Ready to Buy Score</div><div class="card-value" style="font-size:48px;color:'+(rScore>=70?'var(--green)':rScore>=40?'var(--yellow)':'var(--red)')+'">'+rScore+'</div><div class="card-sub"><span class="badge '+(rScore>=70?'badge-green':rScore>=40?'badge-yellow':'badge-red')+'">'+(rScore>=70?'Looking Good':rScore>=40?'Getting Closer':'More Prep Needed')+'</span></div></div>'
+    +'<div class="card"><div class="card-title">Target Home Price</div><div class="card-value">'+money(hp.price)+'</div><div class="card-sub">'+hp.dpPct+'% down = '+money(dpAmt)+'</div></div>'
+    +'<div class="card"><div class="card-title">Down Payment Saved</div><div class="card-value" style="color:var(--cyan)">'+money(dpSaved)+'</div><div class="card-sub">'+dpPct+'% of '+money(dpAmt)+' goal</div></div>'
+    +'<div class="card"><div class="card-title">Est. Monthly Payment</div><div class="card-value">'+money(totalPITI)+'</div><div class="card-sub">PITI at '+hp.rate+'% rate</div></div>';
+
+  var breakdown =
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Home Price</span><b>'+money(hp.price)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Down Payment ('+hp.dpPct+'%)</span><b>'+money(dpAmt)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Loan Amount</span><b>'+money(loanAmt)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Mortgage Rate</span><b>'+hp.rate+'%</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Principal &amp; Interest</span><b>'+money(pi)+'/mo</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Property Tax</span><b>'+money(hp.tax)+'/mo</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>Insurance</span><b>'+money(hp.insurance)+'/mo</b></div>';
+  if(hp.hoa > 0) breakdown += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>HOA</span><b>'+money(hp.hoa)+'/mo</b></div>';
+  breakdown += '<div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700;color:var(--accent2)"><span>Total PITI</span><b>'+money(totalPITI)+'/mo</b></div>';
+
+  var checklist = '';
+  checklist += (D.income >= totalPITI*3 ? '✅ <span style="color:var(--green)">Income qualifies</span>' : '❌ <span style="color:var(--red)">Income below 3x payment</span>') + ' — '+money(D.income)+'/mo vs '+money(totalPITI*3)+' needed<br>';
+  checklist += (dpPct >= 100 ? '✅ <span style="color:var(--green)">Down payment ready</span>' : '⏳ <span style="color:var(--yellow)">Down payment '+dpPct+'% saved</span>') + ' — '+money(Math.max(dpAmt-dpSaved,0))+' remaining<br>';
+  checklist += (D.credit.score >= 720 ? '✅ <span style="color:var(--green)">Credit score strong</span>' : '⚠️ <span style="color:var(--orange)">Credit score '+D.credit.score+'</span>') + ' — 720+ gets best rates<br>';
+  checklist += (dti() < 10 ? '✅ <span style="color:var(--green)">DTI is healthy</span>' : '⏳ <span style="color:var(--yellow)">DTI at '+dti().toFixed(1)+'%</span>') + '<br>';
+  checklist += (emergencyMonths() >= 3 ? '✅ <span style="color:var(--green)">Emergency fund solid</span>' : '⏳ <span style="color:var(--yellow)">Emergency fund '+emergencyMonths().toFixed(1)+' months</span>');
+
+  // Estimate ready date
+  var dpRemain = Math.max(dpAmt - dpSaved, 0);
+  var dpMonthly = dpGoal.length ? dpGoal[0].monthly : 0;
+  var readyMonths = dpMonthly > 0 ? Math.ceil(dpRemain / dpMonthly) : 0;
+  var readyDate = new Date(); readyDate.setMonth(readyDate.getMonth() + readyMonths);
+  var readyStr = dpRemain <= 0 ? 'Now (down payment ready!)' : 'Q'+Math.ceil((readyDate.getMonth()+1)/3)+' '+readyDate.getFullYear();
+
+  $('home-body').innerHTML =
+    '<div class="card"><div class="card-title">Affordability Breakdown</div><div style="font-size:13px">'+breakdown+'</div></div>'
+    +'<div class="card"><div class="card-title">Ready to Buy Checklist</div><div style="font-size:13px;line-height:2">'+checklist+'</div>'
+    +'<div style="margin-top:14px;padding:12px;background:rgba(99,102,241,.08);border-radius:8px;font-size:12px;color:var(--text2)"><b style="color:var(--accent2)">Estimated Ready Date:</b> <b style="color:var(--text)">'+readyStr+'</b></div></div>';
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: PURCHASE EVALUATOR (initial)
+// ═══════════════════════════════════════════════════
+function evaluatePurchase() {
+  var amt = parseFloat($('purch-amount').value) || 0;
+  var name = $('purch-name').value;
+  var method = $('purch-method').value;
+  var income = D.income;
+  var pctVal = income > 0 ? (amt / income * 100).toFixed(1) : '0';
+  var investMonths = D.investing.monthly > 0 ? (amt / D.investing.monthly).toFixed(1) : 'N/A';
+  var returnRate = D.investing.returnRate / 100;
+  var future = (amt * Math.pow(1 + returnRate, 10)).toFixed(0);
+  var light, cls, rec;
+  if (amt < income * 0.15) { light='🟢 Green Light — Good to Go'; cls='traffic-green'; rec='This purchase fits comfortably within your budget. Proceed with confidence.'; }
+  else if (amt < income * 0.35) { light='🟡 Yellow Light — Proceed with Caution'; cls='traffic-yellow'; rec='This is a significant purchase. Consider saving for 1-2 months or finding a 0% financing option.'; }
+  else { light='🔴 Red Light — Reconsider'; cls='traffic-red'; rec='This purchase represents a major portion of your income. Delay, save up, or find a lower-cost alternative.'; }
+  var payNote = method === 'Cash' ? 'Paying cash avoids interest but reduces your liquid reserves.' : 'Financing adds interest costs. Ensure you get 0% APR or factor in the total cost of borrowing.';
+  $('purch-result').innerHTML =
+    '<div class="card-title">Evaluation: '+name+'</div>'
+    +'<div class="traffic '+cls+'" style="margin-bottom:16px;font-size:18px">'+light+'</div>'
+    +'<div style="font-size:13px;line-height:1.7">'
+    +'<p><b>Affordability:</b> At $'+amt.toLocaleString()+', this represents <b>'+pctVal+'%</b> of your monthly income.</p>'
+    +'<p style="margin-top:10px"><b>Opportunity Cost:</b> This equals <b>'+investMonths+' months</b> of investing. At '+D.investing.returnRate+'% return, it could grow to <b>$'+parseInt(future).toLocaleString()+'</b> in 10 years.</p>'
+    +'<p style="margin-top:10px"><b>Payment Method:</b> '+payNote+'</p>'
+    +'<p style="margin-top:10px;padding:10px;background:rgba(99,102,241,.08);border-radius:8px"><b>Recommendation:</b> '+rec+'</p></div>';
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: WEALTH BUILDER
+// ═══════════════════════════════════════════════════
+function renderWealth() {
+  var inv = D.investing.monthly;
+  var rr = D.investing.returnRate;
+  var hasHighDebt = D.debts.some(function(d){return d.rate > 15;});
+  var emDone = emergencyMonths() >= 3;
+
+  var steps = '';
+  var emClass = emDone ? 'rgba(16,185,129,.08)' : 'rgba(245,158,11,.08)';
+  var emBorder = emDone ? 'var(--green)' : 'var(--yellow)';
+  steps += '<div style="padding:12px;background:'+emClass+';border-radius:8px;margin-bottom:10px;border-left:3px solid '+emBorder+'"><b>Step 1: Emergency Fund</b> — '+(emDone?'Complete!':Math.round(emergencyMonths()/3*100)+'% complete')+'<br>Build 3-6 months of expenses in a high-yield savings account.</div>';
+  if(hasHighDebt) steps += '<div style="padding:12px;background:rgba(245,158,11,.08);border-radius:8px;margin-bottom:10px;border-left:3px solid var(--yellow)"><b>Step 2: Eliminate High-Interest Debt</b> — In Progress<br>Pay off debts above 15% APR. Every dollar of interest saved is a guaranteed return.</div>';
+  steps += '<div style="padding:12px;background:rgba(99,102,241,.08);border-radius:8px;margin-bottom:10px;border-left:3px solid var(--accent)"><b>Step '+(hasHighDebt?'3':'2')+': Employer Match</b><br>If your employer offers a 401(k) match, contribute enough for the full match. That is a 100% return.</div>';
+  steps += '<div style="padding:12px;background:rgba(42,58,82,.5);border-radius:8px;margin-bottom:10px;border-left:3px solid var(--border)"><b>Step '+(hasHighDebt?'4':'3')+': Max Tax-Advantaged Accounts</b><br>Roth IRA ($7,000/year limit), then additional 401(k). Grow tax-free.</div>';
+  steps += '<div style="padding:12px;background:rgba(42,58,82,.5);border-radius:8px;border-left:3px solid var(--border)"><b>Step '+(hasHighDebt?'5':'4')+': Taxable Investing</b><br>Low-cost index funds in a brokerage account. Keep fees under 0.1%.</div>';
+
+  var concepts = '<div style="margin-bottom:14px"><b style="color:var(--accent2)">Compound Interest</b><br>'+money(inv)+'/month at '+rr+'% grows to <b>'+money(inv*((Math.pow(1+rr/100/12,120)-1)/(rr/100/12)))+'</b> in 10 years and <b>'+money(inv*((Math.pow(1+rr/100/12,240)-1)/(rr/100/12)))+'</b> in 20 years.</div>'
+    +'<div style="margin-bottom:14px"><b style="color:var(--green)">Index Funds</b><br>Buy the entire market in one fund. Lower fees, less risk, historically strong returns.</div>'
+    +'<div style="margin-bottom:14px"><b style="color:var(--cyan)">Tax-Advantaged Accounts</b><br><b>401(k):</b> Pre-tax contributions lower taxes now. <b>Roth IRA:</b> After-tax contributions grow tax-free.</div>'
+    +'<div><b style="color:var(--pink)">Dollar-Cost Averaging</b><br>Invest a fixed amount regularly. You buy more shares when prices are low.</div>';
+
+  $('wealth-top').innerHTML =
+    '<div class="card"><div class="card-title">🏗️ Your Wealth Building Roadmap</div><div style="font-size:13px;line-height:1.7">'+steps+'</div></div>'
+    +'<div class="card"><div class="card-title">📚 Key Concepts</div><div style="font-size:13px;line-height:1.7">'+concepts+'</div></div>';
+
+  $('wealth-chart-sub').textContent = 'Projection: '+money(inv)+'/mo at '+rr+'% average annual return';
+
+  var wLabels=[], wData=[], wContrib=[];
+  for(var y=0;y<=30;y++) {
+    wLabels.push(y===0?'Now':y+'yr');
+    var mr = rr/100/12;
+    var fv = mr>0 ? inv*((Math.pow(1+mr,y*12)-1)/mr) : inv*y*12;
+    wData.push(Math.round(fv));
+    wContrib.push(y*inv*12);
+  }
+  makeChart('wealthChart', { type:'line', data:{labels:wLabels, datasets:[
+    {label:'With '+rr+'% Growth',data:wData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3},
+    {label:'Contributions Only',data:wContrib,borderColor:'#475569',borderDash:[5,5],tension:0}
+  ]}, options:dollarOpts(true) });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: FINANCIAL COACH
+// ═══════════════════════════════════════════════════
+function renderCoach() {
+  var ncf = netCashFlow();
+  var sr = savingsRate();
+  var highDebt = D.debts.filter(function(d){return d.rate>15;});
+  var html = '';
+
+  if(ncf > 0) html += '<div class="coach-bubble"><div class="coach-tag">🏆 Monthly Win</div>Your net cash flow is <b>positive '+money(ncf)+'</b> — that is a <b>'+sr.toFixed(1)+'%</b> savings rate. '+(sr>20?'You are in the top 20% of savers. Keep this energy going.':'Aim to push above 20% for accelerated wealth building.')+'</div>';
+  else html += '<div class="coach-bubble"><div class="coach-tag">⚠️ Cash Flow Alert</div>Your expenses exceed your income by <b>'+money(Math.abs(ncf))+'</b>. Let us find areas to cut back — even small changes add up fast.</div>';
+
+  if(D.variable.entertainment > D.income*0.05) html += '<div class="coach-bubble"><div class="coach-tag">⚡ Pattern Alert</div>Entertainment spending at <b>'+money(D.variable.entertainment)+'/mo</b> is over 5% of income. Could you swap one activity per week for a lower-cost option?</div>';
+
+  if(highDebt.length) {
+    var d = highDebt[0];
+    var monthlyInt = Math.round(d.balance * d.rate/100/12);
+    html += '<div class="coach-bubble"><div class="coach-tag">🎯 Nudge</div>Your <b>'+d.name+'</b> balance is <b>'+money(d.balance)+' at '+d.rate+'% APR</b>. Each month, roughly <b>'+money(monthlyInt)+' goes purely to interest</b>. Paying an extra $100/month above minimum would save you significant interest and pay it off much sooner.</div>';
+  }
+
+  html += '<div class="coach-bubble"><div class="coach-tag">💪 Challenge</div><b>This week\'s challenge:</b> Can you have 3 no-spend days? That means no purchases outside of bills and groceries. Past participants save an average of <b>$120/week</b> doing this.</div>';
+
+  var nw = netWorth();
+  html += '<div class="coach-bubble"><div class="coach-tag">📊 Big Picture</div>Your current net worth is <b>'+money(nw)+'</b>. At your current savings rate of <b>'+money(ncf)+'/month</b>, you could add <b>'+money(ncf*12)+'</b> in the next 12 months.</div>';
+
+  // Priority
+  var priority = '';
+  if(highDebt.length) priority = 'Make an extra payment on your <b>'+highDebt[0].name+'</b>. Reducing high-interest debt is the single best guaranteed return on your money.';
+  else if(emergencyMonths()<3) priority = 'Top up your <b>emergency fund</b>. You are at '+emergencyMonths().toFixed(1)+' months — getting to 3 months gives you real financial security.';
+  else priority = 'Increase your <b>investing contribution</b> by even '+money(50)+'/month. At '+D.investing.returnRate+'% returns, that small increase compounds into thousands over a decade.';
+
+  html += '<div class="card" style="margin-top:16px"><div class="card-title">What is the one financial behavior that would create the biggest improvement this week?</div><div style="padding:16px;background:rgba(99,102,241,.08);border-radius:10px;font-size:14px;line-height:1.6"><b style="color:var(--accent2)">This week\'s #1 priority:</b> '+priority+'</div></div>';
+
+  $('coach-content').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: BEHAVIOR ENGINE
+// ═══════════════════════════════════════════════════
+function renderBehavior() {
+  var totalImpulse = 0;
+  D.impulses.forEach(function(imp){totalImpulse+=imp.amount;});
+  var triggers = {};
+  D.impulses.forEach(function(imp){ triggers[imp.trigger] = (triggers[imp.trigger]||0)+1; });
+  var topTrigger = ''; var topCount = 0;
+  for(var t in triggers) { if(triggers[t]>topCount){topCount=triggers[t];topTrigger=t;} }
+  var topPct = D.impulses.length>0 ? Math.round(topCount/D.impulses.length*100) : 0;
+
+  $('behavior-top').innerHTML =
+    '<div class="card" style="text-align:center"><div class="card-title">Impulse Purchases (30 days)</div><div class="card-value" style="color:var(--orange)">'+money(totalImpulse)+'</div><div class="card-sub">'+D.impulses.length+' purchases flagged</div></div>'
+    +'<div class="card" style="text-align:center"><div class="card-title">Top Trigger</div><div class="card-value" style="font-size:22px;color:var(--pink)">'+(topTrigger||'None')+'</div><div class="card-sub">'+topPct+'% of impulse purchases</div></div>'
+    +'<div class="card" style="text-align:center"><div class="card-title">Peak Spending Time</div><div class="card-value" style="font-size:22px;color:var(--purple)">9-11 PM</div><div class="card-sub">Late-night online shopping</div></div>';
+
+  var trows = '';
+  var triggerBadge = {Stress:'badge-red',Boredom:'badge-yellow',Celebration:'badge-blue',Loneliness:'badge-cyan',Anxiety:'badge-red'};
+  D.impulses.forEach(function(imp) {
+    trows += '<tr><td>'+imp.date+'</td><td style="color:var(--red)">'+money(imp.amount)+'</td><td>'+imp.cat+'</td><td><span class="badge '+(triggerBadge[imp.trigger]||'badge-yellow')+'">'+imp.trigger+'</span></td></tr>';
+  });
+
+  var triggerLabels=[], triggerData=[], triggerColors=['#ef4444','#f59e0b','#6366f1','#06b6d4','#ec4899','#a855f7'];
+  var ti=0;
+  for(var t in triggers){triggerLabels.push(t);triggerData.push(triggers[t]);ti++;}
+
+  $('behavior-body').innerHTML =
+    '<div class="card"><div class="card-title">Emotional Spending Log</div><table class="tbl"><tr><th>Date</th><th>Amount</th><th>Category</th><th>Trigger</th></tr>'+trows+'</table></div>'
+    +'<div class="card"><div class="card-title">Trigger Analysis</div><div class="chart-wrap"><canvas id="triggerChart"></canvas></div>'
+    +'<div style="margin-top:16px"><div class="insight"><span class="icon">🧠</span><span><b>'+topPct+'%</b> of your impulse purchases occurred during periods of <b>'+topTrigger.toLowerCase()+'</b>. Consider building a "'+topTrigger.toLowerCase()+' budget" so you have a guilt-free outlet.</span></div>'
+    +'<div class="insight"><span class="icon">🌙</span><span>Try a <b>24-hour rule</b>: add items to cart but wait until tomorrow before buying.</span></div></div></div>';
+
+  makeChart('triggerChart', { type:'doughnut', data:{labels:triggerLabels,datasets:[{data:triggerData,backgroundColor:triggerColors.slice(0,triggerLabels.length),borderWidth:1,borderColor:'#1a2236'}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:tickColor,font:tickFont,padding:8,boxWidth:12}}}} });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: REPORTS
+// ═══════════════════════════════════════════════════
+function renderReports() {
+  var ncf = netCashFlow();
+  var sr = savingsRate();
+  var hs = healthScore();
+  var nw = netWorth();
+  var totalImpulse = 0; D.impulses.forEach(function(imp){totalImpulse+=imp.amount;});
+  var highDebt = D.debts.filter(function(d){return d.rate>15;});
+  var highDebtInt = 0; highDebt.forEach(function(d){highDebtInt += Math.round(d.balance*d.rate/100/12);});
+
+  // Weekly
+  var wins = '• Net cash flow positive at '+money(ncf)+'<br>';
+  if(sr>15) wins += '• Savings rate above 15%<br>';
+  var emFund = D.goals.filter(function(g){return g.name.toLowerCase().indexOf('emergency')!==-1;});
+  if(emFund.length && emFund[0].saved/emFund[0].target > 0.5) wins += '• Emergency fund past 50%<br>';
+
+  var concerns = '';
+  if(D.variable.entertainment > D.income*0.05) concerns += '• Entertainment spending above 5% of income<br>';
+  if(totalImpulse > 200) concerns += '• '+D.impulses.length+' impulse purchases totaling '+money(totalImpulse)+'<br>';
+  if(D.variable.dining > 300) concerns += '• Dining out trending high at '+money(D.variable.dining)+'/mo<br>';
+
+  var actions = '';
+  if(D.variable.subscriptions > 100) actions += '• Audit subscriptions ('+money(D.variable.subscriptions)+'/mo)<br>';
+  if(D.variable.dining > 300) actions += '• Set weekly dining limit<br>';
+  if(highDebt.length) actions += '• Make extra payment on '+highDebt[0].name+'<br>';
+
+  $('rpt-0').innerHTML =
+    '<div class="card" style="margin-bottom:16px"><div class="card-title">📅 Weekly Review</div><div class="grid g3" style="margin-top:12px">'
+    +'<div style="padding:12px;background:rgba(16,185,129,.08);border-radius:8px"><div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:6px">🏆 WINS</div><div style="font-size:13px;line-height:1.6">'+wins+'</div></div>'
+    +'<div style="padding:12px;background:rgba(245,158,11,.08);border-radius:8px"><div style="font-size:11px;color:var(--yellow);font-weight:600;margin-bottom:6px">⚠️ AREAS OF CONCERN</div><div style="font-size:13px;line-height:1.6">'+(concerns||'• Looking good this week!')+'</div></div>'
+    +'<div style="padding:12px;background:rgba(99,102,241,.08);border-radius:8px"><div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:6px">📋 ACTION ITEMS</div><div style="font-size:13px;line-height:1.6">'+(actions||'• Stay the course!')+'</div></div>'
+    +'</div></div>'
+    +'<div class="card"><div style="padding:12px;background:rgba(6,182,212,.08);border-radius:10px;font-size:14px;text-align:center;line-height:1.6"><b style="color:var(--cyan)">What is the one financial behavior that would create the biggest improvement next week?</b><br>'
+    +(highDebt.length ? 'Redirect any surplus cash to your '+highDebt[0].name+'. Eliminating '+highDebt[0].rate+'% interest is the best guaranteed return.' : 'Boost your savings rate by just 1%. Small consistent improvements compound into life-changing results.')
+    +'</div></div>';
+
+  // Monthly
+  $('rpt-1').innerHTML =
+    '<div class="card" style="margin-bottom:16px"><div class="card-title">📊 Monthly Wealth Report</div>'
+    +'<div class="grid g3" style="margin-top:12px;margin-bottom:16px">'
+    +'<div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Net Worth</div><div style="font-size:22px;font-weight:700">'+money(nw)+'</div></div>'
+    +'<div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Savings Rate</div><div style="font-size:22px;font-weight:700">'+sr.toFixed(1)+'%</div></div>'
+    +'<div><div style="font-size:11px;color:var(--text2);margin-bottom:4px">Health Score</div><div style="font-size:22px;font-weight:700">'+hs+'/100</div></div></div>'
+    +'<div class="grid g3">'
+    +'<div style="padding:12px;background:rgba(16,185,129,.06);border-radius:8px"><div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px">TOP 3 WINS</div><div style="font-size:12px;line-height:1.7">1. Cash flow positive<br>2. Health score at '+hs+'<br>3. Savings rate '+sr.toFixed(1)+'%</div></div>'
+    +'<div style="padding:12px;background:rgba(239,68,68,.06);border-radius:8px"><div style="font-size:11px;color:var(--red);font-weight:600;margin-bottom:8px">TOP 3 RISKS</div><div style="font-size:12px;line-height:1.7">1. '+(highDebt.length?'High-interest debt: '+money(highDebtInt)+'/mo in interest':'Debt payments: '+money(totalDebtPayments())+'/mo')+'<br>2. '+(D.variable.dining>300?'Dining out at '+money(D.variable.dining)+'/mo':'Variable spending could be optimized')+'<br>3. '+(emergencyMonths()<3?'Emergency fund at '+emergencyMonths().toFixed(1)+' months':'Keep building investment contributions')+'</div></div>'
+    +'<div style="padding:12px;background:rgba(99,102,241,.06);border-radius:8px"><div style="font-size:11px;color:var(--accent2);font-weight:600;margin-bottom:8px">TOP 3 PRIORITIES</div><div style="font-size:12px;line-height:1.7">1. '+(highDebt.length?'Accelerate '+highDebt[0].name+' payoff':'Increase investing contributions')+'<br>2. '+(D.credit.score<720?'Boost credit to 720+':'Maintain credit health')+'<br>3. '+(emergencyMonths()<3?'Complete emergency fund':'Stay consistent with goals')+'</div></div>'
+    +'</div></div>'
+    +'<div class="card"><div class="card-title">Net Worth Trend</div><div class="chart-wrap" style="height:250px"><canvas id="nwChart"></canvas></div></div>';
+
+  var months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  makeChart('nwChart', { type:'line', data:{labels:months,datasets:[{label:'Net Worth',data:D.netWorthHistory,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:'#6366f1'}]}, options:dollarOpts(false) });
+
+  // Smart Insights
+  var ins = '';
+  if(D.variable.subscriptions > D.investing.monthly) ins += '<div class="insight"><span class="icon">💰</span><span>You spend more on <b>subscriptions ('+money(D.variable.subscriptions)+'/mo)</b> than on <b>investing ('+money(D.investing.monthly)+'/mo)</b>. Flipping this ratio adds '+money((D.variable.subscriptions-D.investing.monthly)*12)+'/year to your portfolio.</span></div>';
+  if(emFund.length) { var gap = emFund[0].target-emFund[0].saved; if(gap>0) ins += '<div class="insight"><span class="icon">🎯</span><span>Your emergency fund covers <b>'+emergencyMonths().toFixed(1)+' months</b>. Just <b>'+money(gap)+'</b> to hit your target.</span></div>'; }
+  if(ncf > 0) ins += '<div class="insight"><span class="icon">📈</span><span>At your current <b>'+money(ncf)+'/month</b> savings rate, you will accumulate <b>'+money(ncf*12)+'</b> in the next 12 months.</span></div>';
+  if(highDebt.length) ins += '<div class="insight"><span class="icon">💳</span><span>High-interest debt costs you <b>'+money(highDebtInt*12)+'/year</b> in interest alone. Accelerating payoff is your best guaranteed return.</span></div>';
+  if(D.variable.dining > 200) ins += '<div class="insight"><span class="icon">🍽️</span><span>Dining at <b>'+money(D.variable.dining)+'/mo</b>. Meal prepping 2 more days/week could save <b>'+money(Math.round(D.variable.dining*0.3*12))+'/year</b>.</span></div>';
+  ins += '<div class="insight"><span class="icon">⏰</span><span>Consistency is everything. Keep showing up for your financial goals — small actions compound into massive results over time.</span></div>';
+
+  $('rpt-2').innerHTML = '<div class="card"><div class="card-title">🧠 Personalized Smart Insights</div>'+ins+'</div>';
+}
+
+// ═══════════════════════════════════════════════════
+//  REPORT TABS
+// ═══════════════════════════════════════════════════
+function switchReportTab(el, idx) {
+  document.querySelectorAll('.tabs .tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  $('rpt-'+idx).classList.add('active');
+  if(idx===1) {
+    // re-render net worth chart when tab shown
+    var months = ['Jan','Feb','Mar','Apr','May','Jun'];
+    makeChart('nwChart', { type:'line', data:{labels:months,datasets:[{label:'Net Worth',data:D.netWorthHistory,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:'#6366f1'}]}, options:dollarOpts(false) });
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  GAMIFICATION: XP, LEVELS, BADGES, STREAKS
+// ═══════════════════════════════════════════════════
+
+// --- Challenge state (in-memory) ---
+var challengeState = loadChallengesFromStorage();
+
+var LEVELS = [
+  { name:'Financial Rookie',    minXP:0 },
+  { name:'Budget Beginner',     minXP:200 },
+  { name:'Money Manager',       minXP:500 },
+  { name:'Savings Specialist',  minXP:900 },
+  { name:'Debt Destroyer',      minXP:1400 },
+  { name:'Credit Commander',    minXP:2000 },
+  { name:'Wealth Warrior',      minXP:2800 },
+  { name:'Portfolio Pro',       minXP:3800 },
+  { name:'Finance Master',      minXP:5000 },
+  { name:'Wealth Architect',    minXP:6500 }
+];
+
+function getXPBreakdown() {
+  var items = [];
+  // Savings rate XP
+  var sr = savingsRate();
+  var srXP = Math.min(Math.round(sr * 15), 500);
+  items.push({ label:'Savings Rate ('+sr.toFixed(1)+'%)', xp:srXP });
+  // Health score XP
+  var hs = healthScore();
+  var hsXP = Math.round(hs * 5);
+  items.push({ label:'Health Score ('+hs+'/100)', xp:hsXP });
+  // Goal progress XP
+  var goalXP = 0;
+  D.goals.forEach(function(g) {
+    if(g.target > 0) {
+      var p = Math.min(g.saved / g.target, 1);
+      goalXP += Math.round(p * 100);
+    }
+  });
+  items.push({ label:'Goal Progress', xp:goalXP });
+  // Debt reduction XP (more XP for less debt relative to income)
+  var td = totalDebt();
+  var debtXP = 0;
+  if(td === 0) { debtXP = 300; }
+  else { debtXP = Math.max(0, Math.round(300 - (td / D.income) * 30)); }
+  items.push({ label:'Debt Management', xp:debtXP });
+  // Credit score XP
+  var credXP = Math.round(Math.max(0, D.credit.score - 300) / 550 * 250);
+  items.push({ label:'Credit Score ('+D.credit.score+')', xp:credXP });
+  // Emergency fund XP
+  var emXP = Math.round(Math.min(emergencyMonths() / 6, 1) * 200);
+  items.push({ label:'Emergency Fund ('+emergencyMonths().toFixed(1)+' months)', xp:emXP });
+  // Budget discipline (under budget = XP)
+  var ncf = netCashFlow();
+  var budgetXP = ncf > 0 ? Math.min(Math.round(ncf / 50), 200) : 0;
+  items.push({ label:'Budget Discipline', xp:budgetXP });
+  // Low impulse spending XP
+  var totalImpulse = 0; D.impulses.forEach(function(imp){totalImpulse+=imp.amount;});
+  var impXP = Math.max(0, 150 - Math.round(totalImpulse / 5));
+  items.push({ label:'Impulse Control', xp:impXP });
+  // Challenge XP
+  var chXP = 0;
+  challengeState.forEach(function(done){ if(done) chXP += 50; });
+  if(chXP > 0) items.push({ label:'Challenges Completed', xp:chXP });
+  // Badge bonus
+  var badges = getBadges();
+  var badgeXP = 0; badges.forEach(function(b){ if(b.unlocked) badgeXP += 25; });
+  items.push({ label:'Badge Bonus ('+badges.filter(function(b){return b.unlocked;}).length+' badges)', xp:badgeXP });
+
+  return items;
+}
+
+function getTotalXP() {
+  var items = getXPBreakdown();
+  var total = 0; items.forEach(function(it){ total += it.xp; }); return total;
+}
+
+function getLevel(xp) {
+  var lvl = LEVELS[0];
+  var idx = 0;
+  for(var i = 0; i < LEVELS.length; i++) {
+    if(xp >= LEVELS[i].minXP) { lvl = LEVELS[i]; idx = i; }
+  }
+  var nextXP = idx < LEVELS.length-1 ? LEVELS[idx+1].minXP : lvl.minXP + 1500;
+  var prevXP = lvl.minXP;
+  var pct = nextXP > prevXP ? ((xp - prevXP) / (nextXP - prevXP) * 100) : 100;
+  return { level: idx+1, name: lvl.name, xp: xp, nextXP: nextXP, pct: Math.min(pct, 100) };
+}
+
+function renderXPBar(containerId) {
+  var xp = getTotalXP();
+  var lv = getLevel(xp);
+  $(containerId).innerHTML =
+    '<div class="xp-bar-wrap">'
+    +'<div class="xp-level"><div class="xp-level-num">'+lv.level+'</div><div class="xp-level-label">Level</div></div>'
+    +'<div class="xp-info"><div class="xp-title">'+lv.name+'</div>'
+    +'<div class="xp-subtitle">'+(lv.level<10 ? 'Next: '+LEVELS[lv.level].name+' ('+lv.nextXP+' XP)' : 'Max level reached!')+'</div>'
+    +'<div class="xp-track"><div class="xp-fill" style="width:'+lv.pct+'%"></div></div>'
+    +'<div class="xp-text">'+xp+' / '+lv.nextXP+' XP</div></div>'
+    +'<div class="xp-stats">'
+    +'<div class="xp-stat"><div class="xp-stat-val">'+xp+'</div><div class="xp-stat-lbl">Total XP</div></div>'
+    +'<div class="xp-stat"><div class="xp-stat-val">'+getBadges().filter(function(b){return b.unlocked;}).length+'</div><div class="xp-stat-lbl">Badges</div></div>'
+    +'</div></div>';
+}
+
+// --- Badges ---
+function getBadges() {
+  var sr = savingsRate();
+  var ncf = netCashFlow();
+  var td = totalDebt();
+  var hs = healthScore();
+  var em = emergencyMonths();
+  var nw = netWorth();
+  var goalsComplete = D.goals.filter(function(g){ return g.target>0 && g.saved>=g.target; }).length;
+  var highDebtPaid = D.debts.filter(function(d){return d.rate>15;}).length === 0;
+  var totalImpulse = 0; D.impulses.forEach(function(imp){totalImpulse+=imp.amount;});
+  var challengesDone = challengeState.filter(function(c){return c;}).length;
+
+  return [
+    { icon:'🌱', name:'First Steps', desc:'Enter your financial profile', unlocked:D.income>0 },
+    { icon:'💰', name:'First $1K', desc:'Save $1,000 across all goals', unlocked:D.goals.reduce(function(s,g){return s+g.saved;},0)>=1000 },
+    { icon:'🎯', name:'Goal Getter', desc:'Complete any savings goal', unlocked:goalsComplete>=1 },
+    { icon:'🏆', name:'Triple Crown', desc:'Complete 3 savings goals', unlocked:goalsComplete>=3 },
+    { icon:'📊', name:'Budget Boss', desc:'Positive cash flow', unlocked:ncf>0 },
+    { icon:'🔥', name:'Super Saver', desc:'20%+ savings rate', unlocked:sr>=20 },
+    { icon:'⚡', name:'Hyper Saver', desc:'30%+ savings rate', unlocked:sr>=30 },
+    { icon:'🛡️', name:'Safety Net', desc:'1 month emergency fund', unlocked:em>=1 },
+    { icon:'🏰', name:'Fort Knox', desc:'3 month emergency fund', unlocked:em>=3 },
+    { icon:'🗡️', name:'Debt Slayer', desc:'Pay off all high-interest debt', unlocked:highDebtPaid },
+    { icon:'🕊️', name:'Debt Free', desc:'Zero total debt', unlocked:td===0 },
+    { icon:'💳', name:'Credit Climber', desc:'Credit score 680+', unlocked:D.credit.score>=680 },
+    { icon:'⭐', name:'700 Club', desc:'Credit score 700+', unlocked:D.credit.score>=700 },
+    { icon:'👑', name:'Elite Credit', desc:'Credit score 750+', unlocked:D.credit.score>=750 },
+    { icon:'💎', name:'$50K Club', desc:'Net worth over $50,000', unlocked:nw>=50000 },
+    { icon:'🏠', name:'House Hunter', desc:'Ready to Buy score 70+', unlocked:false },
+    { icon:'🧘', name:'Impulse Master', desc:'Under $100 impulse spend', unlocked:totalImpulse<100 },
+    { icon:'🎮', name:'Challenge Champ', desc:'Complete 3 weekly challenges', unlocked:challengesDone>=3 },
+    { icon:'💪', name:'All Five', desc:'Complete all 5 weekly challenges', unlocked:challengesDone>=5 },
+    { icon:'🌟', name:'Health Hero', desc:'Health Score 80+', unlocked:hs>=80 }
+  ];
+}
+
+function renderBadges() {
+  var badges = getBadges();
+  var html = '';
+  badges.forEach(function(b) {
+    html += '<div class="badge-card '+(b.unlocked?'unlocked':'locked')+'">'
+      +(b.unlocked?'<div class="badge-check">✓</div>':'')
+      +'<span class="badge-icon">'+b.icon+'</span>'
+      +'<div class="badge-name">'+b.name+'</div>'
+      +'<div class="badge-desc">'+b.desc+'</div></div>';
+  });
+  $('achieve-badges').innerHTML = html;
+}
+
+// --- Streaks (computed from data) ---
+function getStreaks() {
+  var ncf = netCashFlow();
+  var sr = savingsRate();
+  var totalImpulse = 0; D.impulses.forEach(function(imp){totalImpulse+=imp.amount;});
+  // Simulated streaks based on current state
+  var budgetStreak = ncf > 0 ? Math.max(1, Math.round(sr / 5)) : 0;
+  var savingsStreak = D.goals.some(function(g){return g.monthly>0;}) ? Math.max(1, Math.round(sr / 4)) : 0;
+  var impulseStreak = totalImpulse < 200 ? Math.max(1, Math.round((400 - totalImpulse) / 60)) : 0;
+  return [
+    { label:'Budget Streak', value:budgetStreak, unit:'weeks', icon:'📊', threshold:4 },
+    { label:'Savings Streak', value:savingsStreak, unit:'months', icon:'💰', threshold:3 },
+    { label:'No-Impulse Streak', value:impulseStreak, unit:'days', icon:'🧘', threshold:5 }
+  ];
+}
+
+function renderStreaks() {
+  var streaks = getStreaks();
+  var html = '<div class="streak-row">';
+  streaks.forEach(function(s) {
+    var onFire = s.value >= s.threshold;
+    html += '<div class="streak-card'+(onFire?' on-fire':'')+'">'
+      +'<div class="streak-fire">'+(onFire?'🔥':s.icon)+'</div>'
+      +'<div class="streak-num" style="color:'+(onFire?'var(--orange)':'var(--text)')+'">'+s.value+'</div>'
+      +'<div class="streak-label">'+s.label+'</div>'
+      +'<div style="font-size:10px;color:var(--text2);margin-top:4px">'+s.value+' '+s.unit+(onFire?' — On Fire!':'')+'</div></div>';
+  });
+  html += '</div>';
+  $('achieve-streaks').innerHTML = html;
+}
+
+// --- Challenges ---
+function getChallenges() {
+  var dining = D.variable.dining;
+  var subs = D.variable.subscriptions;
+  var ncf = netCashFlow();
+  return [
+    { name:'3 No-Spend Days', desc:'Go 3 days with no purchases outside bills and groceries', xp:50 },
+    { name:'Subscription Audit', desc:'Review all subscriptions and cancel at least one', xp:50 },
+    { name:'Extra Debt Payment', desc:'Make a payment above the minimum on any debt', xp:50 },
+    { name:'Meal Prep Champion', desc:'Cook all meals at home for 3 consecutive days', xp:50 },
+    { name:'24-Hour Rule', desc:'Add something to your cart and wait 24 hours before buying', xp:50 }
+  ];
+}
+
+function renderChallenges() {
+  var challenges = getChallenges();
+  var html = '';
+  var completedCount = 0;
+  challenges.forEach(function(ch, i) {
+    var done = challengeState[i];
+    if(done) completedCount++;
+    html += '<div class="challenge-item'+(done?' done':'')+'" onclick="toggleChallenge('+i+')">'
+      +'<div class="challenge-check">'+(done?'✓':'')+'</div>'
+      +'<div class="challenge-info"><div class="challenge-name">'+ch.name+' <span class="challenge-xp">+'+ch.xp+' XP</span></div>'
+      +'<div class="challenge-desc">'+ch.desc+'</div></div></div>';
+  });
+  $('achieve-challenges').innerHTML = html;
+  var totalPossible = challenges.length * 50;
+  var earned = completedCount * 50;
+  $('achieve-challenge-xp').innerHTML = '<b style="color:var(--accent2)">'+earned+' / '+totalPossible+' XP earned this week</b> — Complete all 5 for the <b>All Five</b> badge!';
+}
+
+function toggleChallenge(i) {
+  challengeState[i] = !challengeState[i];
+  renderAchievements();
+  renderXPBar('dash-xp-bar');
+  renderDashGamification();
+  saveToStorage();
+}
+
+// --- XP Breakdown ---
+function renderXPBreakdown() {
+  var items = getXPBreakdown();
+  var html = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">';
+  items.forEach(function(it) {
+    var barPct = Math.min(it.xp / 500 * 100, 100);
+    html += '<div style="padding:10px;background:var(--card2);border-radius:8px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span>'+it.label+'</span><b style="color:var(--accent2)">+'+it.xp+' XP</b></div>'
+      +'<div class="prog-bar"><div class="prog-fill" style="width:'+barPct+'%;background:var(--accent)"></div></div></div>';
+  });
+  html += '</div>';
+  $('achieve-xp-breakdown').innerHTML = html;
+}
+
+// --- Dashboard gamification summary ---
+function renderDashGamification() {
+  var xp = getTotalXP();
+  var lv = getLevel(xp);
+  var badges = getBadges();
+  var unlocked = badges.filter(function(b){return b.unlocked;}).length;
+  var streaks = getStreaks();
+  var bestStreak = streaks.reduce(function(best,s){ return s.value>best.value?s:best; }, streaks[0]);
+  var challengesDone = challengeState.filter(function(c){return c;}).length;
+
+  // Recent badges (unlocked ones, show last 4)
+  var recentBadges = badges.filter(function(b){return b.unlocked;}).slice(-4);
+  var badgeHtml = '';
+  recentBadges.forEach(function(b) {
+    badgeHtml += '<span title="'+b.name+'" style="font-size:24px;margin-right:4px">'+b.icon+'</span>';
+  });
+
+  $('dash-gamification').innerHTML =
+    '<div class="card" style="text-align:center"><div class="card-title">🏆 Badges Earned</div>'
+    +'<div class="card-value" style="color:var(--accent2)">'+unlocked+' <span style="font-size:14px;color:var(--text2)">/ '+badges.length+'</span></div>'
+    +'<div style="margin-top:8px">'+badgeHtml+'</div>'
+    +'<div class="card-sub" style="margin-top:8px"><a style="color:var(--accent2);cursor:pointer;text-decoration:underline" onclick="document.querySelectorAll(\'.nav-item\').forEach(function(n){n.classList.remove(\'active\')});showPage(\'achievements\',document.querySelectorAll(\'.nav-item\')[2])">View all badges</a></div></div>'
+    +'<div class="card" style="text-align:center"><div class="card-title">'+(bestStreak.value>=bestStreak.threshold?'🔥':'📊')+' Best Streak</div>'
+    +'<div class="card-value" style="color:'+(bestStreak.value>=bestStreak.threshold?'var(--orange)':'var(--text)')+'">'+bestStreak.value+'</div>'
+    +'<div class="card-sub">'+bestStreak.label+' ('+bestStreak.unit+')</div></div>'
+    +'<div class="card" style="text-align:center"><div class="card-title">⚡ Weekly Challenges</div>'
+    +'<div class="card-value" style="color:var(--cyan)">'+challengesDone+' <span style="font-size:14px;color:var(--text2)">/ 5</span></div>'
+    +'<div class="prog-bar" style="margin-top:8px"><div class="prog-fill" style="width:'+(challengesDone/5*100)+'%;background:var(--cyan)"></div></div>'
+    +'<div class="card-sub" style="margin-top:4px">'+challengesDone*50+' XP earned</div></div>';
+}
+
+// --- Master achievements render ---
+function renderAchievements() {
+  renderXPBar('achieve-xp-bar');
+  renderStreaks();
+  renderBadges();
+  renderChallenges();
+  renderXPBreakdown();
+  // Update house hunter badge dynamically
+  var badges = getBadges();
+  // Recalculate house hunter
+  var hp = D.homePlan;
+  var dpAmt = hp.price * hp.dpPct / 100;
+  var loanAmt = hp.price - dpAmt;
+  var mr = hp.rate / 100 / 12;
+  var pi = mr > 0 ? loanAmt * (mr * Math.pow(1+mr,360)) / (Math.pow(1+mr,360)-1) : loanAmt/360;
+  var totalPITI = pi + hp.tax + hp.insurance + hp.hoa;
+  var dpGoal = D.goals.filter(function(g){return g.name.toLowerCase().indexOf('home')!==-1 || g.name.toLowerCase().indexOf('down')!==-1;});
+  var dpSaved = dpGoal.length ? dpGoal[0].saved : 0;
+  var dpPctVal = dpAmt > 0 ? Math.round(dpSaved/dpAmt*100) : 0;
+  var rScore = 0;
+  rScore += D.income >= totalPITI * 3 ? 25 : Math.round(D.income / (totalPITI*3) * 25);
+  rScore += Math.min(Math.round(dpPctVal * 0.3), 30);
+  rScore += D.credit.score >= 740 ? 20 : D.credit.score >= 680 ? 15 : D.credit.score >= 620 ? 10 : 5;
+  rScore += dti() < 8 ? 15 : dti() < 15 ? 10 : 5;
+  rScore += emergencyMonths() >= 3 ? 10 : Math.round(emergencyMonths()/3*10);
+  // Update badge card for house hunter
+  var cards = document.querySelectorAll('#achieve-badges .badge-card');
+  if(cards.length > 15) {
+    if(rScore >= 70) { cards[15].classList.remove('locked'); cards[15].classList.add('unlocked'); if(!cards[15].querySelector('.badge-check')) { var ck = document.createElement('div'); ck.className='badge-check'; ck.textContent='✓'; cards[15].appendChild(ck); } }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  MASTER REFRESH
+// ═══════════════════════════════════════════════════
+function refreshAll() {
+  renderDashboard();
+  renderXPBar('dash-xp-bar');
+  renderDashGamification();
+  renderBudget();
+  renderGoals();
+  renderDebt();
+  renderCredit();
+  renderHome();
+  renderWealth();
+  renderCoach();
+  renderBehavior();
+  renderReports();
+  renderAchievements();
+  evaluatePurchase();
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+populateProfileForm();
+refreshAll();
+</script>
+</body>
+</html>
